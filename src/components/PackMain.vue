@@ -90,12 +90,13 @@
                   <el-button
                     icon="el-icon-edit"
                     size="mini"
+                    type="primary"
                     @click="handleEdit(scope.$index, scope.row)">签收</el-button>
                   <el-button
-                    icon="el-icon-message"
+                    icon="el-icon-phone"
                     size="mini"
-                    type="danger"
-                    @click="handleDelete(scope.$index, scope.row)">短信</el-button>
+                    type="success"
+                    @click="handleDelete(scope.$index, scope.row)">电话</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -143,6 +144,9 @@ export default {
     },
     handleDelete (index, row) {
       console.log(index, row)
+    },
+    initListData (){
+
     }
   }
 }
