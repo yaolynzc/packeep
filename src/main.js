@@ -5,10 +5,16 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import App from './App'
 import router from './router'
+import axios from 'axios'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)
 
+// 定义全局变量
+Vue.prototype.$http = axios
+
+// 启用vue-devtools
+Vue.config.devtools = true
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

@@ -5,7 +5,6 @@
         :default-active="activeIndex"
         class="el-menu-demo"
         mode="horizontal"
-        @select="handleSelect"
         background-color="#409EFF"
         text-color="#000"
         active-text-color="#fff">
@@ -42,48 +41,27 @@
               <el-button type="primary" icon="el-icon-search">搜索</el-button>
             </div>
             <el-table
-              :data="tableData"
+              :data="packData.data"
               style="width: 100%">
               <el-table-column
                 label="编号"
-                width="180">
-                <template slot-scope="scope">
-                  <span>{{ scope.row.date }}</span>
-                </template>
+                prop="Id">
               </el-table-column>
               <el-table-column
                 label="手机"
-                width="180">
-                <template slot-scope="scope">
-                  <el-popover trigger="hover" placement="top">
-                    <p>姓名: {{ scope.row.name }}</p>
-                    <p>住址: {{ scope.row.address }}</p>
-                    <div slot="reference" class="name-wrapper">
-                      <el-tag size="medium">{{ scope.row.name }}</el-tag>
-                    </div>
-                  </el-popover>
-                </template>
+                prop="Userphone">
               </el-table-column>
               <el-table-column
                 label="姓名"
-                width="180">
-                <template slot-scope="scope">
-                  <el-popover trigger="hover" placement="top">
-                    <p>姓名: {{ scope.row.name }}</p>
-                    <p>住址: {{ scope.row.address }}</p>
-                    <div slot="reference" class="name-wrapper">
-                      <el-tag size="medium">{{ scope.row.name }}</el-tag>
-                    </div>
-                  </el-popover>
-                </template>
+                prop="Username">
               </el-table-column>
               <el-table-column
                 label="入库"
-                width="180">
-                <template slot-scope="scope">
-                  <i class="el-icon-time"></i>
-                  <span style="margin-left: 10px;" >{{ scope.row.date }}</span>
-                </template>
+                prop="Intime">
+              </el-table-column>
+              <el-table-column
+                label="出库"
+                prop="Outtime">
               </el-table-column>
               <el-table-column label="操作">
                 <template slot-scope="scope">
@@ -103,7 +81,7 @@
             <el-pagination
               background
               layout="prev, pager, next"
-              :total="1000">
+              :total="packData.pagination.total">
             </el-pagination>
         </el-col>
       </el-row>
@@ -113,40 +91,64 @@
 
 <script>
 export default {
-  name: 'PackMain',
+  name: 'Index',
   data () {
     return {
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }],
+      packData: {
+        data: [],
+        pagination: {
+          total: null,
+          page: 1,
+          size: 10
+        }
+      },
       input2: '',
       input21: '',
       activeIndex: '1'
     }
   },
+  created () {
+    this.getCount()
+  },
   methods: {
+    getCount (uphone) {
+      let obj = {
+        uphone: uphone,
+        rad: Math.random()
+      }
+      let that = this
+      this.$http.get('/api/pack', {params: obj})
+        .then(function (res) {
+          if (res.data.count > 0) {
+            that.packData.pagination.total = res.data.count
+            that.getList(uphone)
+          }
+        })
+        .catch(function (err) {
+          console.log(err.message)
+        })
+    },
+    getList (uphone) {
+      let obj = {
+        uphone: uphone,
+        page: this.packData.pagination.page,
+        size: this.packData.pagination.size,
+        rad: Math.random()
+      }
+      let that = this
+      this.$http.get('/api/pack', {params: obj})
+        .then(function (res) {
+          that.packData.data = res.data.dt
+        })
+        .catch(function (err) {
+          console.log(err.message)
+        })
+    },
     handleEdit (index, row) {
       console.log(index, row)
     },
     handleDelete (index, row) {
       console.log(index, row)
-    },
-    initListData (){
-
     }
   }
 }
