@@ -6,12 +6,14 @@ import 'element-ui/lib/theme-chalk/index.css'
 import App from './App'
 import router from './router'
 import axios from 'axios'
+import qs from 'qs'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)
 
 // 定义全局变量
 Vue.prototype.$http = axios
+Vue.prototype.$qs = qs
 
 // 启用vue-devtools
 Vue.config.devtools = true

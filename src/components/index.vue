@@ -13,38 +13,44 @@
     </el-header>
     <el-main>
       <el-row>
-        <el-col :span="6">
-          <el-form  ref="numberValidateForm">
-            <el-form-item label="编码：" prop="age">
-              <el-input type="age" auto-complete="off"></el-input>
+        <el-col :span="5">
+          <el-form :model="ruleForm" :rules="rules" ref="ruleForm">
+            <el-form-item label="包裹入库：">
             </el-form-item>
-            <el-form-item label="手机：" prop="age">
-              <el-input auto-complete="off"></el-input>
+            <el-form-item label="手机：" prop="tel">
+              <el-input
+                v-model="ruleForm.tel"
+                auto-complete="off">
+              </el-input>
             </el-form-item>
-            <el-form-item label="姓名：" prop="age">
-              <el-input auto-complete="off"></el-input>
+            <el-form-item label="姓名：" prop="name">
+              <el-input
+                v-model="ruleForm.name"
+                auto-complete="off">
+              </el-input>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" >入库</el-button>
-              <el-button >清空</el-button>
+              <el-button type="primary" icon="el-icon-check" @click="submitForm('ruleForm')">入库</el-button>
+              <el-button icon="el-icon-delete" @click="clearForm">清空</el-button>
             </el-form-item>
           </el-form>
         </el-col>
-        <el-col :span="18">
+        <el-col :span="19">
             <div class="search-params-block">
-              包裹编号：
+              手机尾号：
               <el-input
-                placeholder="请输入编号"
+                placeholder="请输入手机尾号"
                 prefix-icon="el-icon-search"
-                v-model="input21">
+                v-model="packData.userphone"
+                clearable>
               </el-input>
-              <el-button type="primary" icon="el-icon-search">搜索</el-button>
+              <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
             </div>
             <el-table
               :data="packData.data"
               style="width: 100%">
               <el-table-column
-                label="编号"
+                label="编码"
                 prop="Id">
               </el-table-column>
               <el-table-column
@@ -56,11 +62,11 @@
                 prop="Username">
               </el-table-column>
               <el-table-column
-                label="入库"
+                label="入库时间"
                 prop="Intime">
               </el-table-column>
               <el-table-column
-                label="出库"
+                label="出库时间"
                 prop="Outtime">
               </el-table-column>
               <el-table-column label="操作">
@@ -79,8 +85,10 @@
               </el-table-column>
             </el-table>
             <el-pagination
+              @current-change="handleCurrentChange"
               background
               layout="prev, pager, next"
+              :page-size="packData.pagination.size"
               :total="packData.pagination.total">
             </el-pagination>
         </el-col>
@@ -94,7 +102,22 @@ export default {
   name: 'Index',
   data () {
     return {
+      ruleForm: {
+        tel: '',
+        name: ''
+      },
+      rules: {
+        tel: [
+          {required: true, message: '请输入手机号码', trigger: 'blur'},
+          {min: 11, max: 11, message: '请输入11位手机号码', trigger: 'blur'},
+          {pattern: /^0{0,1}(13[0-9]|15[7-9]|153|156|18[7-9])[0-9]{8}$/, message: '手机号格式不对！', trigger: 'blur'}
+        ],
+        name: [
+          { required: true, message: '请输入收件人', trigger: 'blur' }
+        ]
+      },
       packData: {
+        userphone: '',
         data: [],
         pagination: {
           total: null,
@@ -103,7 +126,6 @@ export default {
         }
       },
       input2: '',
-      input21: '',
       activeIndex: '1'
     }
   },
@@ -144,6 +166,46 @@ export default {
           console.log(err.message)
         })
     },
+    // 点击页码
+    handleCurrentChange (val) {
+      this.packData.pagination.page = val
+      this.getList()
+    },
+    // 搜索
+    search () {
+      this.packData.pagination.page = 1
+      this.getCount(this.packData.userphone)
+    },
+    // 入库
+    submitForm (formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          let obj = {
+            uphone: this.ruleForm.tel,
+            uname: this.ruleForm.name
+          }
+          console.log(this.uphone + ':' + this.uname)
+          let that = this
+          this.$http.post('/api/pack', this.$qs.stringify(obj))
+            .then(function (res) {
+              if (res.data.success) {
+                that.$message({
+                  message: '入库成功！',
+                  type: 'success'
+                })
+                that.getCount()
+              }
+            })
+            .catch(function (err) {
+              console.log(err.message)
+            })
+        }
+      })
+    },
+    clearForm () {
+      this.uphone = ''
+      this.uname = ''
+    },
     handleEdit (index, row) {
       console.log(index, row)
     },
@@ -156,19 +218,19 @@ export default {
 
 <style scoped>
   .el-container {
-    padding-top: 10px;
+    /*padding-top: 0px;*/
   }
   .search-params-block {
     float: left;
   }
   .search-params-block .el-input {
-    width: 250px;
+    width: 200px;
   }
   .el-form {
-    margin:10px 5px;
+    margin:0px 1px;
   }
   .el-form-item .el-input {
-    width: 250px;
+    width: 200px;
     float: left;
   }
   .el-table {
