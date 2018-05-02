@@ -62,22 +62,29 @@
                   style="width: 100%">
                   <el-table-column
                     label="编号"
-                    prop="Id">
+                    prop="Id"
+                    width="180">
                   </el-table-column>
                   <el-table-column
                     label="手机"
-                    prop="Userphone">
+                    prop="Userphone"
+                    width="180"
+                    align="center">
                   </el-table-column>
                   <el-table-column
                     label="姓名"
-                    prop="Username">
+                    prop="Username"
+                    width="220"
+                    align="center">
                   </el-table-column>
                   <el-table-column
                     label="入库时间"
                     prop="Intime"
+                    width="280"
+                    align="center"
                     :formatter="intimeFormatter">
                   </el-table-column>
-                  <el-table-column label="操作">
+                  <el-table-column label="操作" align="center">
                     <template slot-scope="scope">
                       <el-button
                         icon="el-icon-edit"
@@ -110,19 +117,25 @@
                   style="width: 100%">
                   <el-table-column
                     label="编号"
-                    prop="Id">
+                    prop="Id"
+                    width="180">
                   </el-table-column>
                   <el-table-column
                     label="手机"
-                    prop="Userphone">
+                    prop="Userphone"
+                    width="180"
+                    align="center">
                   </el-table-column>
                   <el-table-column
                     label="姓名"
-                    prop="Username">
+                    prop="Username"
+                    width="180"
+                    align="center">
                   </el-table-column>
                   <el-table-column
                     label="出库时间"
                     prop="Outtime"
+                    align="center"
                     :formatter="outtimeFormatter">
                   </el-table-column>
                 </el-table>
@@ -198,7 +211,7 @@ export default {
             that.packData.pagination.total = res.data.count
             that.getList(uphone, state)
           }else{
-            that.packData.data = ''
+            that.packData.data = []
             that.loading = false
           }
         })
@@ -268,7 +281,7 @@ export default {
     // 搜索
     search () {
       this.packData.pagination.page = 1
-      this.packData.data = ''
+      this.packData.data = []
       this.getCount(this.packData.userphone, this.activeName)
     },
     // 入库
@@ -303,7 +316,7 @@ export default {
     },
     // tab切换点击事件
     tabhandleClick (tab, event) {
-      this.packData.data = ''
+      this.packData.data = []
       this.getCount(this.packData.userphone, this.activeName)
     },
     handleOutClick (index, row) {
