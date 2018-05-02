@@ -15,8 +15,7 @@
       <el-row>
         <el-col :span="6">
           <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px">
-            <el-form-item label="包裹入库：">
-            </el-form-item>
+            <el-tag>包裹入库</el-tag>
             <el-form-item label="手机：" prop="tel">
               <el-input
                 v-model="ruleForm.tel"
@@ -36,107 +35,106 @@
           </el-form>
         </el-col>
         <el-col :span="18">
-          <div class="search-params-block">
-            手机尾号：
-            <el-input
-              placeholder="请输入手机尾号"
-              prefix-icon="el-icon-search"
-              v-model="packData.userphone"
-              clearable>
-            </el-input>
-            <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
-          </div>
-          <div></div>
-          <div>
-            <el-tabs v-model="activeName" @tab-click="handleClick">
-            <el-tab-pane label="未签收" name="0">
-              <el-table
-                :data="packData.data"
-                style="width: 100%">
-                <el-table-column
-                  label="编码"
-                  prop="Id">
-                </el-table-column>
-                <el-table-column
-                  label="手机"
-                  prop="Userphone">
-                </el-table-column>
-                <el-table-column
-                  label="姓名"
-                  prop="Username">
-                </el-table-column>
-                <el-table-column
-                  label="入库时间"
-                  prop="Intime">
-                </el-table-column>
-                <el-table-column label="操作">
-                  <template slot-scope="scope">
-                    <el-button
-                      icon="el-icon-edit"
-                      size="mini"
-                      type="primary"
-                      @click="handleEdit(scope.$index, scope.row)">签收</el-button>
-                    <el-button
-                      icon="el-icon-phone"
-                      size="mini"
-                      type="success"
-                      @click="handleDelete(scope.$index, scope.row)">电话</el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-pagination
-                @current-change="handleCurrentChange"
-                background
-                layout="prev, pager, next"
-                :page-size="packData.pagination.size"
-                :total="packData.pagination.total">
-              </el-pagination>
-            </el-tab-pane>
-            <el-tab-pane label="已签收" name="1">
-              <el-table
-                :data="packData.data"
-                style="width: 100%">
-                <el-table-column
-                  label="编码"
-                  prop="Id">
-                </el-table-column>
-                <el-table-column
-                  label="手机"
-                  prop="Userphone">
-                </el-table-column>
-                <el-table-column
-                  label="姓名"
-                  prop="Username">
-                </el-table-column>
-                <el-table-column
-                  label="出库时间"
-                  prop="Outtime">
-                </el-table-column>
-                <el-table-column label="操作">
-                  <template slot-scope="scope">
-                    <el-button
-                      icon="el-icon-edit"
-                      size="mini"
-                      type="primary"
-                      @click="handleEdit(scope.$index, scope.row)">签收</el-button>
-                    <el-button
-                      icon="el-icon-phone"
-                      size="mini"
-                      type="success"
-                      @click="handleDelete(scope.$index, scope.row)">电话</el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-pagination
-                @current-change="handleCurrentChange"
-                background
-                layout="prev, pager, next"
-                :page-size="packData.pagination.size"
-                :total="packData.pagination.total">
-              </el-pagination>
-            </el-tab-pane>
-            </el-tabs>
-          </div>
+          <el-row>
+            <el-col :span="24">
+              <div class="search-params-block">
+                手机尾号：
+                <el-input
+                  placeholder="请输入手机尾号"
+                  prefix-icon="el-icon-search"
+                  v-model="packData.userphone"
+                  clearable>
+                </el-input>
+                <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
+              </div>
+            </el-col>
+            <el-col :span="24" style="margin-top: 15px">
+              <el-tabs v-model="activeName" @tab-click="tabhandleClick">
+              <el-tab-pane label="未签收" name="0">
+                <el-table
+                  v-loading="loading"
+                  element-loading-text="加载中"
+                  element-loading-spinner="el-icon-loading"
+                  element-loading-background="rgba(0, 0, 0, 0.8)"
+                  :data="packData.data"
+                  style="width: 100%">
+                  <el-table-column
+                    label="编码"
+                    prop="Id">
+                  </el-table-column>
+                  <el-table-column
+                    label="手机"
+                    prop="Userphone">
+                  </el-table-column>
+                  <el-table-column
+                    label="姓名"
+                    prop="Username">
+                  </el-table-column>
+                  <el-table-column
+                    label="入库时间"
+                    prop="Intime"
+                    :formatter="intimeFormatter">
+                  </el-table-column>
+                  <el-table-column label="操作">
+                    <template slot-scope="scope">
+                      <el-button
+                        icon="el-icon-edit"
+                        size="mini"
+                        type="primary"
+                        @click="handleOutClick(scope.$index, scope.row)">签收</el-button>
+                      <el-button
+                        icon="el-icon-phone"
+                        size="mini"
+                        type="success"
+                        @click="handleDialClick(scope.$index, scope.row)">电话</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  @current-change="handleCurrentChange"
+                  background
+                  layout="prev, pager, next"
+                  :page-size="packData.pagination.size"
+                  :total="packData.pagination.total">
+                </el-pagination>
+              </el-tab-pane>
+              <el-tab-pane label="已签收" name="1">
+                <el-table
+                  v-loading="loading"
+                  element-loading-text="加载中"
+                  element-loading-spinner="el-icon-loading"
+                  element-loading-background="rgba(0, 0, 0, 0.8)"
+                  :data="packData.data"
+                  style="width: 100%">
+                  <el-table-column
+                    label="编码"
+                    prop="Id">
+                  </el-table-column>
+                  <el-table-column
+                    label="手机"
+                    prop="Userphone">
+                  </el-table-column>
+                  <el-table-column
+                    label="姓名"
+                    prop="Username">
+                  </el-table-column>
+                  <el-table-column
+                    label="出库时间"
+                    prop="Outtime"
+                    :formatter="outtimeFormatter">
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  @current-change="handleCurrentChange"
+                  background
+                  layout="prev, pager, next"
+                  :page-size="packData.pagination.size"
+                  :total="packData.pagination.total">
+                </el-pagination>
+              </el-tab-pane>
+              </el-tabs>
+            </el-col>
+          </el-row>
         </el-col>
       </el-row>
     </el-main>
@@ -146,11 +144,13 @@
 <script>
 // 引入百度语音RESTful跨域请求api
 import BaiduAip from '@/utils/baidu_tts_cors.js'
+import moment from 'moment'
 export default {
   name: 'Index',
   data () {
     return {
       activeName: '0',
+      loading: null,
       ruleForm: {
         tel: '',
         name: ''
@@ -162,7 +162,7 @@ export default {
           {pattern: /^[1-9]{1}\d{10}$/, message: '手机号格式不对！', trigger: 'blur'}
         ],
         name: [
-          { required: true, message: '请输入收件人', trigger: 'blur' }
+          { required: true, message: '请输入收件人姓名', trigger: 'blur' }
         ]
       },
       packData: {
@@ -179,44 +179,50 @@ export default {
     }
   },
   created () {
-    this.getCount()
+    this.getCount('', this.activeName)
   },
   methods: {
-    getCount (uphone) {
+    getCount (uphone, state) {
       let obj = {
         uphone: uphone,
+        state: state,
         rad: Math.random()
       }
+      this.loading = true
       let that = this
       this.$http.get('/api/pack', {params: obj})
         .then(function (res) {
           if (res.data.count > 0) {
             that.packData.pagination.total = res.data.count
-            that.getList(uphone)
+            that.getList(uphone, state)
           }
         })
         .catch(function (err) {
           console.log(err.message)
         })
     },
-    getList (uphone) {
+    getList (uphone, state) {
       let obj = {
         uphone: uphone,
+        state: state,
         page: this.packData.pagination.page,
         size: this.packData.pagination.size,
         rad: Math.random()
       }
+
       let that = this
       this.$http.get('/api/pack', {params: obj})
         .then(function (res) {
+          that.loading = false
           that.packData.data = res.data.dt
-          if(uphone){
+
+          if (uphone) {
             let redt = res.data.dt
             let text = '包裹编号'
             let audio = null
-            console.log(redt)
+
+            // 拼接检索到的编码
             for (let n in redt) {
-              console.log(redt[n].Id)
               text += redt[n].Id
             }
             audio = BaiduAip.btts({
@@ -230,7 +236,7 @@ export default {
               volume: 0.3,
               autoDestory: true,
               timeout: 10000,
-              hidden: false,
+              hidden: true,
               onInit: function (htmlAudioElement) {
               },
               onSuccess: function (htmlAudioElement) {
@@ -252,12 +258,13 @@ export default {
     // 点击页码
     handleCurrentChange (val) {
       this.packData.pagination.page = val
-      this.getList()
+      this.getList(this.packData.userphone, this.activeName)
     },
     // 搜索
     search () {
       this.packData.pagination.page = 1
-      this.getCount(this.packData.userphone)
+      this.packData.data = ''
+      this.getCount(this.packData.userphone, this.activeName)
     },
     // 入库
     submitForm (formName) {
@@ -267,7 +274,7 @@ export default {
             uphone: this.ruleForm.tel,
             uname: this.ruleForm.name
           }
-          console.log(this.uphone + ':' + this.uname)
+
           let that = this
           this.$http.post('/api/pack', this.$qs.stringify(obj))
             .then(function (res) {
@@ -276,7 +283,7 @@ export default {
                   message: '入库成功！',
                   type: 'success'
                 })
-                that.getCount()
+                that.getCount('', that.activeName)
               }
             })
             .catch(function (err) {
@@ -286,41 +293,66 @@ export default {
       })
     },
     clearForm () {
-      this.uphone = ''
-      this.uname = ''
+      this.ruleForm.tel = ''
+      this.ruleForm.name = ''
     },
-    handleClick (tab, event) {
-      console.log(tab, event)
+    // tab切换点击事件
+    tabhandleClick (tab, event) {
+      this.packData.data = ''
+      this.getCount('', this.activeName)
     },
-    handleEdit (index, row) {
+    handleOutClick (index, row) {
       console.log(index, row)
+      let obj = {
+        state: 1
+      }
+
+      let that = this
+      this.$http.put('/api/pack/' + row.Id, this.$qs.stringify(obj))
+        .then(function (res) {
+          if (res.data.success) {
+            that.$message({
+              message: '签收成功！',
+              type: 'success'
+            })
+            that.getCount(that.packData.userphone, that.activeName)
+          }
+        })
+        .catch(function (err) {
+          console.log(err.message)
+        })
     },
-    handleDelete (index, row) {
-      console.log(index, row)
+    handleDialClick (index, row) {
+      this.$message({
+        message: '开发中，敬请期待！'
+      })
+    },
+    intimeFormatter (row, column) {
+      return moment(row.Intime).format('YYYY-MM-DD HH:mm:ss')
+    },
+    outtimeFormatter (row, column) {
+      return moment(row.Outtime).format('YYYY-MM-DD HH:mm:ss')
     }
   }
 }
 </script>
 
 <style scoped>
-  .el-col {
-    padding-right: 10px;
+  .el-tag {
+    margin:0px 0px 15px 0px;
+    font-size: 15px;
+  }
+  .el-form {
+    padding-right: 25px;
+  }
+  .el-form-item {
+    margin-left: -30px;
   }
   .search-params-block {
     float: left;
   }
   .search-params-block .el-input {
     width: 200px;
-  }
-  .el-from {
-    margin-right: 10px;
-  }
-  .el-form-item .el-input {
-    /*width: 200px;*/
-    float: left;
-  }
-  .el-table {
-    margin-top: 50px;
   }
   .el-pagination {
     margin-top: 20px;
