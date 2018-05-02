@@ -43,7 +43,9 @@
                   placeholder="请输入手机尾号"
                   prefix-icon="el-icon-search"
                   v-model="packData.userphone"
-                  clearable>
+                  clearable
+                  @keyup.enter.native="search"
+                  @clear="search">
                 </el-input>
                 <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
               </div>
@@ -59,7 +61,7 @@
                   :data="packData.data"
                   style="width: 100%">
                   <el-table-column
-                    label="编码"
+                    label="编号"
                     prop="Id">
                   </el-table-column>
                   <el-table-column
@@ -107,7 +109,7 @@
                   :data="packData.data"
                   style="width: 100%">
                   <el-table-column
-                    label="编码"
+                    label="编号"
                     prop="Id">
                   </el-table-column>
                   <el-table-column
@@ -195,6 +197,9 @@ export default {
           if (res.data.count > 0) {
             that.packData.pagination.total = res.data.count
             that.getList(uphone, state)
+          }else{
+            that.packData.data = ''
+            that.loading = false
           }
         })
         .catch(function (err) {
@@ -299,7 +304,7 @@ export default {
     // tab切换点击事件
     tabhandleClick (tab, event) {
       this.packData.data = ''
-      this.getCount('', this.activeName)
+      this.getCount(this.packData.userphone, this.activeName)
     },
     handleOutClick (index, row) {
       console.log(index, row)
