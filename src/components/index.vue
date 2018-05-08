@@ -14,23 +14,40 @@
     <el-main>
       <el-row>
         <el-col :span="6">
-          <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px">
+          <el-form
+            :model="ruleForm"
+            status-icon :rules="rules"
+            ref="ruleForm"
+            label-width="100px">
             <el-tag>包裹入库</el-tag>
-            <el-form-item label="手机：" prop="tel">
+            <el-form-item label="编号：" prop="code">
               <el-input
-                v-model="ruleForm.tel"
-                auto-complete="off">
+                v-model="ruleForm.code"
+                :autofocus="true"
+                @keyup.enter.native="getFocus('inputUphone')"
+                auto-complete="true">
               </el-input>
+            </el-form-item>
+            <el-form-item label="手机：" prop="tel">
+              <el-autocomplete
+                v-model="ruleForm.tel"
+                ref="inputUphone"
+                @keyup.enter.native="getFocus('inputUname')"
+                @input="searchUphone"
+                :fetch-suggestions="querySearch"
+                @select="handleSelect">
+              </el-autocomplete>
             </el-form-item>
             <el-form-item label="姓名：" prop="name">
               <el-input
                 v-model="ruleForm.name"
-                auto-complete="off">
+                ref="inputUname"
+                @keyup.enter.native="submitForm('ruleForm')"
+                auto-complete="true">
               </el-input>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" icon="el-icon-check" @click="submitForm('ruleForm')">入库</el-button>
-              <el-button icon="el-icon-delete" @click="clearForm">清空</el-button>
             </el-form-item>
           </el-form>
         </el-col>
@@ -62,7 +79,7 @@
                   style="width: 100%">
                   <el-table-column
                     label="编号"
-                    prop="Id"
+                    prop="Poscode"
                     width="180">
                   </el-table-column>
                   <el-table-column
@@ -117,7 +134,7 @@
                   style="width: 100%">
                   <el-table-column
                     label="编号"
-                    prop="Id"
+                    prop="Poscode"
                     width="180">
                   </el-table-column>
                   <el-table-column
@@ -164,21 +181,28 @@ export default {
   name: 'Index',
   data () {
     return {
+      userTelFill: [
+        // { 'value': '153', 'name': 'chen' },
+        // { 'value': '186', 'name': 'flame' }
+      ],
       activeName: '0',
       loading: null,
       ruleForm: {
+        code: '',
         tel: '',
         name: ''
       },
       rules: {
+        code: [
+          {required: true, message: '请输入包裹位置编号', trigger: 'blur'},
+          {pattern: /^[0-9]*$/, message: '请输入数字编号！', trigger: 'blur'}
+        ],
         tel: [
           {required: true, message: '请输入手机号码', trigger: 'blur'},
           {min: 11, max: 11, message: '请输入11位手机号码', trigger: 'blur'},
           {pattern: /^[1-9]{1}\d{10}$/, message: '手机号格式不对！', trigger: 'blur'}
         ],
-        name: [
-          { required: true, message: '请输入收件人姓名', trigger: 'blur' }
-        ]
+        name: []
       },
       packData: {
         userphone: '',
@@ -203,6 +227,7 @@ export default {
         state: state,
         rad: Math.random()
       }
+
       this.loading = true
       let that = this
       this.$http.get('/api/pack', {params: obj})
@@ -210,7 +235,7 @@ export default {
           if (res.data.count > 0) {
             that.packData.pagination.total = res.data.count
             that.getList(uphone, state)
-          }else{
+          } else {
             that.packData.data = []
             that.loading = false
           }
@@ -240,8 +265,8 @@ export default {
             let audio = null
 
             // 拼接检索到的编码
-            for (let n in redt) {
-              text += redt[n].Id
+            for (let n of redt) {
+              text += n.Poscode
             }
             audio = BaiduAip.btts({
               tex: text,
@@ -289,6 +314,7 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           let obj = {
+            pcode: this.ruleForm.code,
             uphone: this.ruleForm.tel,
             uname: this.ruleForm.name
           }
@@ -301,6 +327,7 @@ export default {
                   message: '入库成功！',
                   type: 'success'
                 })
+                that.resetForm()
                 that.getCount('', that.activeName)
               }
             })
@@ -310,9 +337,9 @@ export default {
         }
       })
     },
-    clearForm () {
-      this.ruleForm.tel = ''
-      this.ruleForm.name = ''
+    resetForm () {
+      this.$refs['ruleForm'].resetFields()
+      this.getFocus('inputUphone')
     },
     // tab切换点击事件
     tabhandleClick (tab, event) {
@@ -350,6 +377,47 @@ export default {
     },
     outtimeFormatter (row, column) {
       return moment(row.Outtime).format('YYYY-MM-DD HH:mm:ss')
+    },
+    getFocus (inputname) {
+      this.$refs[inputname].focus()
+    },
+    searchUphone () {
+      // console.log('change')
+      let obj = {
+        uphone: this.ruleForm.tel,
+        size: this.packData.pagination.size,
+        rad: Math.random()
+      }
+
+      let that = this
+      this.$http.get('/api/phone', {params: obj})
+        .then(function (res) {
+          if (res.data.dt.length > 0) {
+            let redt = res.data.dt
+
+            // 挑选userphone和username
+            for (let n of redt) {
+              n.value = n.Userphone
+            }
+            that.userTelFill = redt
+          }
+        })
+        .catch(function (err) {
+          console.log(err.message)
+        })
+    },
+    querySearch (queryString, cb) {
+      if (!this.ruleForm.tel) {
+        this.userTelFill = []
+      }
+      var results = this.userTelFill
+      // 调用 callback 返回建议列表的数据
+      cb(results)
+    },
+    handleSelect (item) {
+      // console.log(item.Username)
+      this.getFocus('inputUname')
+      this.ruleForm.name = item.Username
     }
   }
 }
