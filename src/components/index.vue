@@ -13,7 +13,7 @@
     </el-header>
     <el-main>
       <el-row>
-        <el-col :span="6">
+        <el-col :span="5">
           <el-form
             :model="ruleForm"
             status-icon :rules="rules"
@@ -23,7 +23,8 @@
             <el-form-item label="编号：" prop="code">
               <el-input
                 v-model="ruleForm.code"
-                :autofocus="true"
+                suffix-icon="el-icon-location"
+                ref="inputPcode"
                 @keyup.enter.native="getFocus('inputUphone')"
                 auto-complete="true">
               </el-input>
@@ -31,16 +32,19 @@
             <el-form-item label="手机：" prop="tel">
               <el-autocomplete
                 v-model="ruleForm.tel"
+                suffix-icon="el-icon-phone"
                 ref="inputUphone"
+                :fetch-suggestions="querySearch"
+                :trigger-on-focus="false"
                 @keyup.enter.native="getFocus('inputUname')"
                 @input="searchUphone"
-                :fetch-suggestions="querySearch"
-                @select="handleSelect">
+                @select="handleTelSelect">
               </el-autocomplete>
             </el-form-item>
             <el-form-item label="姓名：" prop="name">
               <el-input
                 v-model="ruleForm.name"
+                suffix-icon="el-icon-news"
                 ref="inputUname"
                 @keyup.enter.native="submitForm('ruleForm')"
                 auto-complete="true">
@@ -51,13 +55,14 @@
             </el-form-item>
           </el-form>
         </el-col>
-        <el-col :span="18">
+        <el-col :span="19">
           <el-row>
             <el-col :span="24">
               <div class="search-params-block">
                 手机尾号：
                 <el-input
                   placeholder="请输入手机尾号"
+                  :autofocus="true"
                   prefix-icon="el-icon-search"
                   v-model="packData.userphone"
                   clearable
@@ -65,6 +70,7 @@
                   @clear="search">
                 </el-input>
                 <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
+                <el-button type="danger" icon="el-icon-delete" @click="deletePack">删除</el-button>
               </div>
             </el-col>
             <el-col :span="24" style="margin-top: 15px">
@@ -76,11 +82,16 @@
                   element-loading-spinner="el-icon-loading"
                   element-loading-background="rgba(0, 0, 0, 0.8)"
                   :data="packData.data"
+                  @selection-change="handleSelChange"
                   style="width: 100%">
+                  <el-table-column
+                    type="selection"
+                    width="50">
+                  </el-table-column>
                   <el-table-column
                     label="编号"
                     prop="Poscode"
-                    width="180">
+                    width="100">
                   </el-table-column>
                   <el-table-column
                     label="手机"
@@ -101,6 +112,12 @@
                     align="center"
                     :formatter="intimeFormatter">
                   </el-table-column>
+                  <el-table-column
+                    label="入库天数"
+                    prop="Packday"
+                    width="280"
+                    align="center">
+                  </el-table-column>
                   <el-table-column label="操作" align="center">
                     <template slot-scope="scope">
                       <el-button
@@ -116,13 +133,16 @@
                     </template>
                   </el-table-column>
                 </el-table>
-                <el-pagination
-                  @current-change="handleCurrentChange"
-                  background
-                  layout="prev, pager, next"
-                  :page-size="packData.pagination.size"
-                  :total="packData.pagination.total">
-                </el-pagination>
+                <div align="center">
+                  <el-pagination
+                    @current-change="handleCurrentChange"
+                    v-show="packData.pagination.total"
+                    background
+                    layout="prev, pager, next"
+                    :page-size="packData.pagination.size"
+                    :total="packData.pagination.total">
+                  </el-pagination>
+                </div>
               </el-tab-pane>
               <el-tab-pane label="已签收" name="1">
                 <el-table
@@ -156,13 +176,16 @@
                     :formatter="outtimeFormatter">
                   </el-table-column>
                 </el-table>
-                <el-pagination
-                  @current-change="handleCurrentChange"
-                  background
-                  layout="prev, pager, next"
-                  :page-size="packData.pagination.size"
-                  :total="packData.pagination.total">
-                </el-pagination>
+                <div align="center">
+                  <el-pagination
+                    @current-change="handleCurrentChange"
+                    v-show="packData.pagination.total"
+                    background
+                    layout="prev, pager, next"
+                    :page-size="packData.pagination.size"
+                    :total="packData.pagination.total">
+                  </el-pagination>
+                </div>
               </el-tab-pane>
               </el-tabs>
             </el-col>
@@ -185,6 +208,7 @@ export default {
         // { 'value': '153', 'name': 'chen' },
         // { 'value': '186', 'name': 'flame' }
       ],
+      mulSelData: [],
       activeName: '0',
       loading: null,
       ruleForm: {
@@ -208,7 +232,7 @@ export default {
         userphone: '',
         data: [],
         pagination: {
-          total: null,
+          total: 0,
           page: 1,
           size: 10
         }
@@ -257,7 +281,13 @@ export default {
       this.$http.get('/api/pack', {params: obj})
         .then(function (res) {
           that.loading = false
-          that.packData.data = res.data.dt
+          let redt = res.data.dt
+          if (redt && redt.length > 0) {
+            for (let item of redt) {
+              item.Packday = moment(new Date().getTime()).diff(moment(item.Intime), 'days')
+            }
+            that.packData.data = redt
+          }
 
           if (uphone) {
             let redt = res.data.dt
@@ -305,6 +335,7 @@ export default {
     },
     // 搜索
     search () {
+      this.packData.pagination.total = 0
       this.packData.pagination.page = 1
       this.packData.data = []
       this.getCount(this.packData.userphone, this.activeName)
@@ -339,7 +370,8 @@ export default {
     },
     resetForm () {
       this.$refs['ruleForm'].resetFields()
-      this.getFocus('inputUphone')
+      this.getFocus('inputPcode')
+      this.userTelFill = []
     },
     // tab切换点击事件
     tabhandleClick (tab, event) {
@@ -347,7 +379,7 @@ export default {
       this.getCount(this.packData.userphone, this.activeName)
     },
     handleOutClick (index, row) {
-      console.log(index, row)
+      // console.log(index, row)
       let obj = {
         state: 1
       }
@@ -382,41 +414,93 @@ export default {
       this.$refs[inputname].focus()
     },
     searchUphone () {
-      // console.log('change')
-      let obj = {
-        uphone: this.ruleForm.tel,
-        size: this.packData.pagination.size,
-        rad: Math.random()
-      }
+      if (this.ruleForm.tel.length > 2) {
+        // console.log(this.ruleForm.tel.length)
 
-      let that = this
-      this.$http.get('/api/phone', {params: obj})
-        .then(function (res) {
-          if (res.data.dt.length > 0) {
-            let redt = res.data.dt
+        let obj = {
+          uphone: this.ruleForm.tel,
+          size: this.packData.pagination.size,
+          rad: Math.random()
+        }
 
-            // 挑选userphone和username
-            for (let n of redt) {
-              n.value = n.Userphone
+        let that = this
+        this.$http.get('/api/phone', {params: obj})
+          .then(function (res) {
+            if (res.data.dt && res.data.dt.length > 0) {
+              let redt = res.data.dt
+              // 挑选userphone和username
+              for (let n of redt) {
+                n.value = n.Userphone
+              }
+              that.userTelFill = redt
             }
-            that.userTelFill = redt
+          })
+          .catch(function (err) {
+            console.log(err.message)
+          })
+      }
+    },
+    // 删除入库记录
+    deletePack () {
+      let delPack = this.mulSelData
+      if (delPack.length === 0) {
+        this.$message.error('请勾选删除项!')
+      } else {
+        this.$confirm('您确定删除所勾选记录?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          let that = this
+          for (let item of delPack) {
+            this.$http.delete('/api/pack/' + item.Id)
+              .then(function (res) {
+                if (res.data.success) {
+                  that.$message({
+                    type: 'success',
+                    message: '删除成功!',
+                    onClose: () => {
+                      that.search()
+                    }
+                  })
+                }
+              })
+              .catch(function (error) {
+                console.log(error)
+                that.$message({
+                  type: 'error',
+                  message: '删除失败!'
+                })
+              })
           }
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          })
         })
-        .catch(function (err) {
-          console.log(err.message)
-        })
+      }
+    },
+    handleSelChange (val) {
+      this.mulSelData = val
     },
     querySearch (queryString, cb) {
-      if (!this.ruleForm.tel) {
-        this.userTelFill = []
-      }
-      var results = this.userTelFill
       // 调用 callback 返回建议列表的数据
-      cb(results)
+      cb(this.userTelFill)
     },
-    handleSelect (item) {
+    handleTelSelect (item) {
       // console.log(item.Username)
-      this.getFocus('inputUname')
+      // this.$refs['inputUphone'].validateField()
+      let that = this
+      this.$http.get('/api/phone/' + this.ruleForm.tel)
+        .then(function (res) {
+          if (res.data.success) {
+            that.ruleForm.name = res.data.pack.Username
+          }
+        })
+        .catch(function (error) {
+          console.log(error)
+        })
       this.ruleForm.name = item.Username
     }
   }
@@ -429,10 +513,16 @@ export default {
     font-size: 15px;
   }
   .el-form {
-    padding-right: 25px;
+    padding-right: 10px;
   }
   .el-form-item {
     margin-left: -30px;
+  }
+  .el-form-item .el-input {
+    width:250px;
+  }
+  .el-autocomplete {
+    width:250px;
   }
   .search-params-block {
     float: left;
@@ -442,6 +532,5 @@ export default {
   }
   .el-pagination {
     margin-top: 20px;
-    float: right;
   }
 </style>
