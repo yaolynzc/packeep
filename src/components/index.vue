@@ -406,47 +406,44 @@ export default {
         })
     },
     handleDialClick (index, row) {
-      // 采用"赛邮-云通讯"语音通知API接口
-      let sendvoiceUrl = 'https://api.mysubmail.com/voice/xsend.json'
-      let paras = {
-        appid: '20694',
-        to: row.Userphone,
-        project: 'ux0bf2',
-        vars: {
-          name: row.Username
-        },
-        signature: 'c0428970b976d160b77d59b3e28d7137'
+      let obj = {
+        uphone: row.Userphone,
+        uname: row.Username
       }
-      let that = this
-      this.$http.post(sendvoiceUrl, this.$qs.stringify(paras))
-        .then(function (res) {
-          console.log(res.data)
 
-          if (res.data.status === 'success') {
+      let that = this
+      this.$http.post('/api/phone', this.$qs.stringify(obj))
+        .then(function (res) {
+          if (res.data.success) {
             // 显示电话通知成功消息
             that.$message({
-              message: '电话通知已发送！',
+              message: '电话通知成功！',
               type: 'success'
             })
-
+            // 电话通知成功后刷新页面
             let obj = {
               havedial: 1
             }
-
-            this.$http.put('/api/pack/' + row.Id, this.$qs.stringify(obj))
+            that.$http.put('/api/pack/' + row.Id, that.$qs.stringify(obj))
               .then(function (res) {
                 if (res.data.success) {
                   // 刷新页面
-                  that.getList(this.packData.userphone, this.activeName)
+                  that.getCount(that.packData.userphone, that.activeName)
                 }
               })
               .catch(function (err) {
                 console.log(err.message)
               })
+          } else {
+            // 显示电话通知失败消息
+            that.$message({
+              message: '电话通知失败！',
+              type: 'error'
+            })
           }
         })
-        .catch(function (error) {
-          console.log(error)
+        .catch(function (err) {
+          console.log(err.message)
         })
     },
     intimeFormatter (row, column) {
