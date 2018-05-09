@@ -96,26 +96,32 @@
                   <el-table-column
                     label="手机"
                     prop="Userphone"
-                    width="180"
+                    width="150"
                     align="center">
                   </el-table-column>
                   <el-table-column
                     label="姓名"
                     prop="Username"
-                    width="220"
+                    width="100"
                     align="center">
                   </el-table-column>
                   <el-table-column
                     label="入库时间"
                     prop="Intime"
-                    width="280"
+                    width="200"
                     align="center"
                     :formatter="intimeFormatter">
                   </el-table-column>
                   <el-table-column
                     label="入库天数"
                     prop="Packday"
-                    width="280"
+                    width="100"
+                    align="center">
+                  </el-table-column>
+                  <el-table-column
+                    label="电话次数"
+                    prop="Havedial"
+                    width="100"
                     align="center">
                   </el-table-column>
                   <el-table-column label="操作" align="center">
@@ -400,9 +406,48 @@ export default {
         })
     },
     handleDialClick (index, row) {
-      this.$message({
-        message: '开发中，敬请期待！'
-      })
+      // 采用"赛邮-云通讯"语音通知API接口
+      let sendvoiceUrl = 'https://api.mysubmail.com/voice/xsend.json'
+      let paras = {
+        appid: '20694',
+        to: row.Userphone,
+        project: 'ux0bf2',
+        vars: {
+          name: row.Username
+        },
+        signature: 'c0428970b976d160b77d59b3e28d7137'
+      }
+      let that = this
+      this.$http.post(sendvoiceUrl, this.$qs.stringify(paras))
+        .then(function (res) {
+          console.log(res.data)
+
+          if (res.data.status === 'success') {
+            // 显示电话通知成功消息
+            that.$message({
+              message: '电话通知已发送！',
+              type: 'success'
+            })
+
+            let obj = {
+              havedial: 1
+            }
+
+            this.$http.put('/api/pack/' + row.Id, this.$qs.stringify(obj))
+              .then(function (res) {
+                if (res.data.success) {
+                  // 刷新页面
+                  that.getList(this.packData.userphone, this.activeName)
+                }
+              })
+              .catch(function (err) {
+                console.log(err.message)
+              })
+          }
+        })
+        .catch(function (error) {
+          console.log(error)
+        })
     },
     intimeFormatter (row, column) {
       return moment(row.Intime).format('YYYY-MM-DD HH:mm:ss')
@@ -489,19 +534,19 @@ export default {
       cb(this.userTelFill)
     },
     handleTelSelect (item) {
-      // console.log(item.Username)
-      // this.$refs['inputUphone'].validateField()
-      let that = this
-      this.$http.get('/api/phone/' + this.ruleForm.tel)
-        .then(function (res) {
-          if (res.data.success) {
-            that.ruleForm.name = res.data.pack.Username
-          }
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
       this.ruleForm.name = item.Username
+
+      // 根据手机号查询姓名，填充到姓名input
+      // let that = this
+      // this.$http.get('/api/phone/' + this.ruleForm.tel)
+      //   .then(function (res) {
+      //     if (res.data.success) {
+      //       that.ruleForm.name = res.data.pack.Username
+      //     }
+      //   })
+      //   .catch(function (error) {
+      //     console.log(error)
+      //   })
     }
   }
 }
@@ -513,16 +558,16 @@ export default {
     font-size: 15px;
   }
   .el-form {
-    padding-right: 10px;
+    padding-right: 20px;
   }
   .el-form-item {
     margin-left: -30px;
   }
   .el-form-item .el-input {
-    width:250px;
+    width:auto;
   }
   .el-autocomplete {
-    width:250px;
+    width:auto;
   }
   .search-params-block {
     float: left;
