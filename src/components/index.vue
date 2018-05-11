@@ -139,7 +139,7 @@
                       <el-button
                         icon="el-icon-view"
                         size="mini"
-                        type="info"
+                        type="warning"
                         @click="openCamera">拍照</el-button>
                     </template>
                   </el-table-column>
@@ -201,17 +201,14 @@
               </el-tabs>
             </el-col>
           </el-row>
-          <el-dialog title="取件拍照" width="50%" :visible.sync="dialogCameraVisible">
+          <el-dialog title="取件拍照" width="520px" :visible.sync="dialogCameraVisible">
             <div>
-              <video id="video" :src="videoSrc" :poster="videoImg" :autoplay="playStatus" width="480" height="320">
-              </video>
-              <canvas id="canvas" width="480" height="320"></canvas>
-              <span class="ico ico-video" :class="{ hide: isPlay }" v-on:click="playClick()">打开</span>
-              <span class="ico ico-video" :class="{ hide: isPlay }" v-on:click="getCameraClick()">拍照</span>
-            </div>
-            <div slot="footer" class="dialog-footer">
-              <el-button @click="dialogCameraVisible = false">取 消</el-button>
-              <el-button type="primary" @click="dialogCameraVisible = false">确 定</el-button>
+              <video ref="video" width="480" height="320" autoplay></video>
+              <canvas ref="canvas" width="480" height="320" style="display:none"></canvas>
+              <div slot="footer" class="dialog-footer">
+                <el-button icon="el-icon-view" type="warning" @click="snapCamera">{{snapCameraBtn}}</el-button>
+                <el-button icon="el-icon-success" type="primary" >确定</el-button>
+              </div>
             </div>
           </el-dialog>
         </el-col>
@@ -224,6 +221,7 @@
 // 引入百度语音RESTful跨域请求api
 import BaiduAip from '@/utils/baidu_tts_cors.js'
 import moment from 'moment'
+// import nopic from '@/assets/img/nopic.png'
 
 export default {
   name: 'Index',
@@ -235,6 +233,7 @@ export default {
       ],
       mulSelData: [],
       dialogCameraVisible: false,
+      snapCameraBtn: '拍照',
       form: {
         name: '',
         region: '',
@@ -245,11 +244,6 @@ export default {
         resource: '',
         desc: ''
       },
-      videoDom: '',
-      videoSrc: '',
-      videoImg: 'http://static.fdc.com.cn/avatar/usercenter/5996999fa093c04d4b4dbaf1_162.jpg',
-      playStatus: '',
-      isPlay: false,
       activeName: '0',
       loading: null,
       ruleForm: {
@@ -582,21 +576,44 @@ export default {
     },
     openCamera () {
       this.dialogCameraVisible = true
+      this.$nextTick(() => {
+        let video = this.$refs['video']
+        let videoObj = {'video': {width: 480, height: 320}}
+
+        if (navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+          // 调用用户媒体设备, 访问摄像头
+          this.getUserMedia(videoObj,
+            function (mediaStream) {
+              video.srcObject = mediaStream
+              video.play()
+            },
+            function (error) {
+              console.log(`访问用户媒体设备失败${error.name}, ${error.message}`)
+            }
+          )
+        } else {
+          this.$message({
+            type: 'info',
+            message: '不支持访问用户媒体'
+          })
+        }
+      })
     },
-    playClick () {
-      this.videoDom = document.getElementById('video')
-      if (navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
-        // 调用用户媒体设备, 访问摄像头
-        this.getUserMedia({video: {width: 480, height: 320}}, this.success, this.error)
-      } else {
-        alert('不支持访问用户媒体')
-      }
-      this.isPlay = !this.isPlay
-      this.videoDom.play()
-    },
-    getCameraClick () {
-      let canvas = document.getElementById('canvas')
-      canvas.getContext('2d').drawImage(this.videoDom, 0, 0, 480, 320)
+    snapCamera () {
+      this.$nextTick(() => {
+        if (this.snapCameraBtn === '拍照') {
+          this.snapCameraBtn = '重拍'
+          // 捕获影像到canvas
+          let canvas = this.$refs['canvas']
+          canvas.getContext('2d').drawImage(this.$refs['video'], 0, 0, 480, 320)
+          // 捕获后暂停摄像头
+          this.$refs['video'].pause()
+        } else {
+          this.snapCameraBtn = '拍照'
+          // 继续播放摄像头
+          this.$refs['video'].play()
+        }
+      })
     },
     // 访问用户媒体设备的兼容方法
     getUserMedia (constraints, success, error) {
@@ -614,11 +631,28 @@ export default {
         navigator.getUserMedia(constraints, success, error)
       }
     },
-    success (stream) {
-      this.videoDom.srcObject = stream
+    getVideo () {
+      this.dialogCameraVisible = true
+      this.$nextTick(() => {
+        // 这个对应的是ref属性
+        var video = this.$refs.video
+        var videoObj = { 'video': true }
+
+        navigator.mediaDevices.getUserMedia(videoObj)
+          .then(function (mediaStream) {
+            video.srcObject = mediaStream
+            video.play()
+          })
+          .catch(function (error) {
+            console.log(error)
+          })
+      })
     },
-    error (error) {
-      console.log(`访问用户媒体设备失败${error.name}, ${error.message}`)
+    takePhoto () {
+      this.$nextTick(() => {
+        this.context = this.$refs.canvas.getContext('2d')
+        this.context.drawImage(this.$refs.video, 0, 0, 480, 320)
+      })
     }
   }
 }
