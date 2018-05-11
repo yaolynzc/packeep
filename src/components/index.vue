@@ -136,6 +136,11 @@
                         size="mini"
                         type="success"
                         @click="handleDialClick(scope.$index, scope.row)">电话</el-button>
+                      <el-button
+                        icon="el-icon-view"
+                        size="mini"
+                        type="info"
+                        @click="openCamera">拍照</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -196,6 +201,19 @@
               </el-tabs>
             </el-col>
           </el-row>
+          <el-dialog title="取件拍照" width="50%" :visible.sync="dialogCameraVisible">
+            <div>
+              <video id="video" :src="videoSrc" :poster="videoImg" :autoplay="playStatus" width="480" height="320">
+              </video>
+              <canvas id="canvas" width="480" height="320"></canvas>
+              <span class="ico ico-video" :class="{ hide: isPlay }" v-on:click="playClick()">打开</span>
+              <span class="ico ico-video" :class="{ hide: isPlay }" v-on:click="getCameraClick()">拍照</span>
+            </div>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="dialogCameraVisible = false">取 消</el-button>
+              <el-button type="primary" @click="dialogCameraVisible = false">确 定</el-button>
+            </div>
+          </el-dialog>
         </el-col>
       </el-row>
     </el-main>
@@ -206,6 +224,7 @@
 // 引入百度语音RESTful跨域请求api
 import BaiduAip from '@/utils/baidu_tts_cors.js'
 import moment from 'moment'
+
 export default {
   name: 'Index',
   data () {
@@ -215,6 +234,22 @@ export default {
         // { 'value': '186', 'name': 'flame' }
       ],
       mulSelData: [],
+      dialogCameraVisible: false,
+      form: {
+        name: '',
+        region: '',
+        date1: '',
+        date2: '',
+        delivery: false,
+        type: [],
+        resource: '',
+        desc: ''
+      },
+      videoDom: '',
+      videoSrc: '',
+      videoImg: 'http://static.fdc.com.cn/avatar/usercenter/5996999fa093c04d4b4dbaf1_162.jpg',
+      playStatus: '',
+      isPlay: false,
       activeName: '0',
       loading: null,
       ruleForm: {
@@ -544,6 +579,46 @@ export default {
       //   .catch(function (error) {
       //     console.log(error)
       //   })
+    },
+    openCamera () {
+      this.dialogCameraVisible = true
+    },
+    playClick () {
+      this.videoDom = document.getElementById('video')
+      if (navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+        // 调用用户媒体设备, 访问摄像头
+        this.getUserMedia({video: {width: 480, height: 320}}, this.success, this.error)
+      } else {
+        alert('不支持访问用户媒体')
+      }
+      this.isPlay = !this.isPlay
+      this.videoDom.play()
+    },
+    getCameraClick () {
+      let canvas = document.getElementById('canvas')
+      canvas.getContext('2d').drawImage(this.videoDom, 0, 0, 480, 320)
+    },
+    // 访问用户媒体设备的兼容方法
+    getUserMedia (constraints, success, error) {
+      if (navigator.mediaDevices.getUserMedia) {
+        // 最新的标准API
+        navigator.mediaDevices.getUserMedia(constraints).then(success).catch(error)
+      } else if (navigator.webkitGetUserMedia) {
+        // webkit核心浏览器
+        navigator.webkitGetUserMedia(constraints, success, error)
+      } else if (navigator.mozGetUserMedia) {
+        // firfox浏览器
+        navigator.mozGetUserMedia(constraints, success, error)
+      } else if (navigator.getUserMedia) {
+        // 旧版API
+        navigator.getUserMedia(constraints, success, error)
+      }
+    },
+    success (stream) {
+      this.videoDom.srcObject = stream
+    },
+    error (error) {
+      console.log(`访问用户媒体设备失败${error.name}, ${error.message}`)
     }
   }
 }
