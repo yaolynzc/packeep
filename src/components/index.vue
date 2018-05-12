@@ -210,7 +210,7 @@
               </el-tabs>
             </el-col>
           </el-row>
-          <el-dialog title="取件拍照" width="600px" :visible.sync="dialogCameraVisible">
+          <el-dialog title="取件拍照" width="600px" :visible.sync="dialogCameraVisible" @close="closeCamera">
             <div>
               <video ref="video" width="560" height="420" autoplay></video>
               <canvas ref="canvas" width="560" height="420" style="display:none"></canvas>
@@ -440,6 +440,9 @@ export default {
               message: '签收成功！',
               type: 'success'
             })
+            // 关闭摄像头
+            that.closeCamera()
+            // 刷新页面
             that.getCount(that.packData.userphone, that.activeName)
           }
         })
@@ -450,7 +453,7 @@ export default {
     // 拍照上传并完成签收
     uploadPicClick () {
       let picBase64 = this.$refs.canvas.toDataURL().substring(22)
-      console.log(picBase64)
+      // console.log(picBase64)
       let obj = {
         state: 1,
         havepic: picBase64
@@ -618,7 +621,9 @@ export default {
       //     console.log(error)
       //   })
     },
+    // 打开摄像头
     openCamera (index, row) {
+      this.snapCameraBtn = '拍照'
       this.dialogCameraPackID = row.Id
       this.dialogCameraVisible = true
       this.$nextTick(() => {
@@ -630,7 +635,10 @@ export default {
           this.getUserMedia(videoObj,
             function (mediaStream) {
               video.srcObject = mediaStream
-              video.play()
+              // video.play()
+              if (video.paused) {
+                video.play()
+              }
             },
             function (error) {
               console.log(`访问用户媒体设备失败${error.name}, ${error.message}`)
@@ -644,6 +652,7 @@ export default {
         }
       })
     },
+    // 拍照
     snapCamera () {
       this.$nextTick(() => {
         if (this.snapCameraBtn === '拍照') {
@@ -658,6 +667,12 @@ export default {
           // 继续播放摄像头
           this.$refs['video'].play()
         }
+      })
+    },
+    // 关闭摄像头
+    closeCamera () {
+      this.$nextTick(() => {
+        this.$refs['video'].srcObject = null
       })
     },
     // 访问用户媒体设备的兼容方法
