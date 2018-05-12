@@ -186,7 +186,7 @@
                     width="180"
                     align="center">
                     <template slot-scope="scope">
-                      <img  :src="scope.row.Havepic" alt="" style="width: 30px;height: 20px">
+                      <img  :src="scope.row.Havepic" alt="" style="width: 80px;height: 60px">
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -210,10 +210,10 @@
               </el-tabs>
             </el-col>
           </el-row>
-          <el-dialog title="取件拍照" width="520px" :visible.sync="dialogCameraVisible">
+          <el-dialog title="取件拍照" width="600px" :visible.sync="dialogCameraVisible">
             <div>
-              <video ref="video" width="480" height="320" autoplay></video>
-              <canvas ref="canvas" width="480" height="320" style="display:none"></canvas>
+              <video ref="video" width="560" height="420" autoplay></video>
+              <canvas ref="canvas" width="560" height="420" style="display:none"></canvas>
               <div slot="footer" class="dialog-footer">
                 <el-button icon="el-icon-view" type="warning" @click="snapCamera">{{snapCameraBtn}}</el-button>
                 <el-button icon="el-icon-success" type="primary" @click="uploadPicClick">确定</el-button>
@@ -291,6 +291,8 @@ export default {
   },
   methods: {
     getCount (uphone, state) {
+      // 检索总数先归零
+      this.packData.pagination.total = 0
       let obj = {
         uphone: uphone,
         state: state,
@@ -621,7 +623,7 @@ export default {
       this.dialogCameraVisible = true
       this.$nextTick(() => {
         let video = this.$refs['video']
-        let videoObj = {'video': {width: 480, height: 320}}
+        let videoObj = {'video': {width: 560, height: 420}}
 
         if (navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
           // 调用用户媒体设备, 访问摄像头
@@ -648,7 +650,7 @@ export default {
           this.snapCameraBtn = '重拍'
           // 捕获影像到canvas
           let canvas = this.$refs['canvas']
-          canvas.getContext('2d').drawImage(this.$refs['video'], 0, 0, 480, 320)
+          canvas.getContext('2d').drawImage(this.$refs['video'], 0, 0, 560, 420)
           // 捕获后暂停摄像头
           this.$refs['video'].pause()
         } else {
