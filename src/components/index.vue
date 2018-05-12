@@ -140,7 +140,7 @@
                         icon="el-icon-view"
                         size="mini"
                         type="warning"
-                        @click="openCamera">拍照</el-button>
+                        @click="openCamera(scope.$index, scope.row)">拍照</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -181,6 +181,15 @@
                     align="center">
                   </el-table-column>
                   <el-table-column
+                    label="签收照片"
+                    prop="Havepic"
+                    width="180"
+                    align="center">
+                    <template slot-scope="scope">
+                      <img  :src="scope.row.Havepic" alt="" style="width: 30px;height: 20px">
+                    </template>
+                  </el-table-column>
+                  <el-table-column
                     label="出库时间"
                     prop="Outtime"
                     align="center"
@@ -207,7 +216,7 @@
               <canvas ref="canvas" width="480" height="320" style="display:none"></canvas>
               <div slot="footer" class="dialog-footer">
                 <el-button icon="el-icon-view" type="warning" @click="snapCamera">{{snapCameraBtn}}</el-button>
-                <el-button icon="el-icon-success" type="primary" >确定</el-button>
+                <el-button icon="el-icon-success" type="primary" @click="uploadPicClick">确定</el-button>
               </div>
             </div>
           </el-dialog>
@@ -233,6 +242,7 @@ export default {
       ],
       mulSelData: [],
       dialogCameraVisible: false,
+      dialogCameraPackID: '',
       snapCameraBtn: '拍照',
       form: {
         name: '',
@@ -413,6 +423,7 @@ export default {
       this.packData.data = []
       this.getCount(this.packData.userphone, this.activeName)
     },
+    // 不拍照直接签收
     handleOutClick (index, row) {
       // console.log(index, row)
       let obj = {
@@ -432,6 +443,37 @@ export default {
         })
         .catch(function (err) {
           console.log(err.message)
+        })
+    },
+    // 拍照上传并完成签收
+    uploadPicClick () {
+      let picBase64 = this.$refs.canvas.toDataURL().substring(22)
+      console.log(picBase64)
+      let obj = {
+        state: 1,
+        havepic: picBase64
+      }
+      let that = this
+      this.$http.post('/api/pack/' + this.dialogCameraPackID, this.$qs.stringify(obj))
+        .then(function (res) {
+          if (res.data.success) {
+            that.dialogCameraVisible = false
+            // 显示成功消息
+            that.$message({
+              message: '签收成功！',
+              type: 'success'
+            })
+            that.getCount(that.packData.userphone, that.activeName)
+          } else {
+            // 显示失败消息
+            that.$message({
+              message: '照片保存失败！',
+              type: 'error'
+            })
+          }
+        })
+        .catch(function (error) {
+          console.log(error)
         })
     },
     handleDialClick (index, row) {
@@ -574,7 +616,8 @@ export default {
       //     console.log(error)
       //   })
     },
-    openCamera () {
+    openCamera (index, row) {
+      this.dialogCameraPackID = row.Id
       this.dialogCameraVisible = true
       this.$nextTick(() => {
         let video = this.$refs['video']
@@ -630,29 +673,6 @@ export default {
         // 旧版API
         navigator.getUserMedia(constraints, success, error)
       }
-    },
-    getVideo () {
-      this.dialogCameraVisible = true
-      this.$nextTick(() => {
-        // 这个对应的是ref属性
-        var video = this.$refs.video
-        var videoObj = { 'video': true }
-
-        navigator.mediaDevices.getUserMedia(videoObj)
-          .then(function (mediaStream) {
-            video.srcObject = mediaStream
-            video.play()
-          })
-          .catch(function (error) {
-            console.log(error)
-          })
-      })
-    },
-    takePhoto () {
-      this.$nextTick(() => {
-        this.context = this.$refs.canvas.getContext('2d')
-        this.context.drawImage(this.$refs.video, 0, 0, 480, 320)
-      })
     }
   }
 }
