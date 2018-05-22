@@ -10,6 +10,19 @@
         active-text-color="#fff">
         <el-menu-item index="1">处理中心</el-menu-item>
       </el-menu>
+      <div class="user-dropdown-menu">
+        <img style="width:32px;height:32px;margin-top:15px;" :src="avatar">
+        <span>&nbsp;</span>
+        <el-dropdown trigger="click">
+          <span class="el-dropdown-link">
+            陈辉<i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>个人信息</el-dropdown-item>
+            <el-dropdown-item>退出系统</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
     </el-header>
     <el-main>
       <el-row>
@@ -230,12 +243,13 @@
 // 引入百度语音RESTful跨域请求api
 import BaiduAip from '@/utils/baidu_tts_cors.js'
 import moment from 'moment'
-// import nopic from '@/assets/img/nopic.png'
+import menavatar from '@/assets/img/men.png'
 
 export default {
-  name: 'Index',
+  name: 'index',
   data () {
     return {
+      avatar: menavatar,
       userTelFill: [
         // { 'value': '153', 'name': 'chen' },
         // { 'value': '186', 'name': 'flame' }
@@ -244,16 +258,6 @@ export default {
       dialogCameraVisible: false,
       dialogCameraPackID: '',
       snapCameraBtn: '拍照',
-      form: {
-        name: '',
-        region: '',
-        date1: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource: '',
-        desc: ''
-      },
       activeName: '0',
       loading: null,
       ruleForm: {
@@ -291,8 +295,8 @@ export default {
   },
   methods: {
     getCount (uphone, state) {
-      // 检索总数先归零
-      this.packData.pagination.total = 0
+      // 页码先归零
+      this.packData.pagination.page = 0
       let obj = {
         uphone: uphone,
         state: state,
@@ -720,5 +724,19 @@ export default {
   }
   .el-pagination {
     margin-top: 20px;
+  }
+  .user-dropdown-menu {
+    position:absolute;
+    top: 10px;
+    right: 0;
+    width: 150px;
+    heigth: 100%;
+  }
+  .el-dropdown {
+    position: absolute;
+    top:20px;
+  }
+  .el-dropdown-link {
+    color: #ffffff;
   }
 </style>

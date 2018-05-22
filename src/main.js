@@ -7,10 +7,12 @@ import App from './App'
 import router from './router'
 import axios from 'axios'
 import qs from 'qs'
+import VueCookie from 'vue-cookie'
 
 Vue.config.productionTip = false
 // 引入ElementUI库
 Vue.use(ElementUI)
+Vue.use(VueCookie)
 
 // 定义全局变量
 Vue.prototype.$http = axios
