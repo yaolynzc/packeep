@@ -13,9 +13,9 @@ export default {
 
 <style>
   body {
-      background-size: cover;
-      background-image: url('~@/assets/img/backimg.png')
-    }
+    background-size: cover;
+    background-image: url('~@/assets/img/backimg.png')
+  }
   #app {
     font-family: 'Avenir', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
