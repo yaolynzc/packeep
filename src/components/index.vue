@@ -13,13 +13,13 @@
       <div class="user-dropdown-menu">
         <img style="width:32px;height:32px;margin-top:15px;" :src="avatar">
         <span>&nbsp;</span>
-        <el-dropdown trigger="click">
+        <el-dropdown trigger="click" @command="dropDownClick">
           <span class="el-dropdown-link">
-            陈辉<i class="el-icon-arrow-down el-icon--right"></i>
+            {{profileForm.uname}}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>个人信息</el-dropdown-item>
-            <el-dropdown-item>退出系统</el-dropdown-item>
+            <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+            <el-dropdown-item command="logout">退出系统</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -233,6 +233,25 @@
               </div>
             </div>
           </el-dialog>
+          <el-dialog title="个人信息" width="600px" :visible.sync="dialogProfileVisible">
+            <div>
+              <el-form :model="profileForm">
+                <el-form-item label="手机号：" :label-width="profileForm.itemWidth">
+                  <span>{{profileForm.id}}</span>
+                </el-form-item>
+                <el-form-item label="用户名：" :label-width="profileForm.itemWidth">
+                  <el-input v-model="profileForm.username" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="昵称：" :label-width="profileForm.itemWidth">
+                  <el-input v-model="profileForm.nickname" auto-complete="off"></el-input>
+                </el-form-item>
+              </el-form>
+              <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormVisible = false">取 消</el-button>
+                <el-button type="primary" @click="dialogFormVisible = false">修 改</el-button>
+              </div>
+            </div>
+          </el-dialog>
         </el-col>
       </el-row>
     </el-main>
@@ -256,6 +275,7 @@ export default {
       ],
       mulSelData: [],
       dialogCameraVisible: false,
+      dialogProfileVisible: false,
       dialogCameraPackID: '',
       snapCameraBtn: '拍照',
       activeName: '0',
@@ -277,6 +297,12 @@ export default {
         ],
         name: []
       },
+      profileForm: {
+        uphone: this.$cookie.get('id'),
+        username: this.$cookie.get('username'),
+        nickname: this.$cookie.get('nickname') || '用户',
+        itemWidth: '120px'
+      },
       packData: {
         userphone: '',
         data: [],
@@ -291,9 +317,16 @@ export default {
     }
   },
   created () {
-    this.getCount('', this.activeName)
+    this.naviMethod()
   },
   methods: {
+    naviMethod () {
+      if (this.checkLogin()) {
+        this.getCount('', this.activeName)
+      } else {
+        this.$router.push('/login')
+      }
+    },
     getCount (uphone, state) {
       // 页码先归零
       this.packData.pagination.page = 0
@@ -694,6 +727,35 @@ export default {
         // 旧版API
         navigator.getUserMedia(constraints, success, error)
       }
+    },
+    // 个人菜单点击事件
+    dropDownClick (command) {
+      // this.$message('click on item ' + command)
+      let that = this
+      switch (command) {
+        case 'profile':
+        {
+          that.dialogProfileVisible = true
+          break
+        }
+        case 'logout':
+        {
+          that.$cookie.set('id', '')
+          that.$router.push('/login')
+          break
+        }
+        default:
+          break
+      }
+    },
+    // 检测是否登录
+    checkLogin () {
+      let res = true
+      let cookieUid = this.$cookie.get('id')
+      if (!cookieUid) {
+        res = false
+      }
+      return res
     }
   }
 }
