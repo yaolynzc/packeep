@@ -1,4 +1,5 @@
 <template>
+  <div class="loginwrap">
   <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-position="left" label-width="0px" class="demo-ruleForm login-container">
     <h3 class="title">快递托管信息系统</h3>
     <el-form-item prop="id">
@@ -18,11 +19,12 @@
         @keyup.enter.native="submitForm('ruleForm')"
         placeholder="密码"></el-input>
     </el-form-item>
-    <el-checkbox v-model="checked" checked class="remember">记住密码</el-checkbox>
+    <el-checkbox v-model="checked" checked class="remember">下次自动登录</el-checkbox>
     <el-form-item style="width:100%;">
       <el-button type="primary" style="width:100%;" @click.native.prevent="submitForm('ruleForm')" :loading="logining">登录</el-button>
     </el-form-item>
   </el-form>
+  </div>
 </template>
 
 <script>
@@ -75,14 +77,12 @@ export default {
                 })
                 // 记住密码，7天内自动登录
                 if (that.checked) {
-                  that.$cookie.set('id', res.data.user.Id, 7)
-                  that.$cookie.set('username', res.data.user.Username, 7)
-                  that.$cookie.set('nickname', res.data.user.Nickname, 7)
+                  that.$cookie.set('uid', res.data.user.Id, 7)
+                  that.$cookie.set('upass', res.data.user.Pwd, 7)
                 } else {
                   // 否则，每小时登录一次
-                  that.$cookie.set('id', res.data.user.Id, { expires: '1h' })
-                  that.$cookie.set('username', res.data.user.Username, { expires: '1h' })
-                  that.$cookie.set('nickname', res.data.user.Nickname, { expires: '1h' })
+                  that.$cookie.set('uid', res.data.user.Id, { expires: '1h' })
+                  that.$cookie.set('upass', res.data.user.Pwd, { expires: '1h' })
                 }
                 // 导航到首页
                 that.$router.push('/index')
@@ -109,7 +109,7 @@ export default {
     // 检测是否登录
     checkLogin () {
       let res = true
-      let cookieUid = this.$cookie.get('id')
+      let cookieUid = this.$cookie.get('uid')
       if (!cookieUid) {
         res = false
       }
@@ -120,6 +120,17 @@ export default {
 </script>
 
 <style scoped>
+  .loginwrap {
+    /*background-color: #2c3e50;*/
+    background-size: cover;
+    background-image: url('~@/assets/img/backimg.png');
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    top:0px;
+    left:0px;
+    /*position:absolute; left:0px; top:0px;*/
+  }
   .login-container {
     /*box-shadow: 0 0px 8px 0 rgba(0, 0, 0, 0.06), 0 1px 0px 0 rgba(0, 0, 0, 0.02);*/
     -webkit-border-radius: 5px;

@@ -12,12 +12,8 @@ export default {
 </script>
 
 <style>
-  body {
-    background-size: cover;
-    background-image: url('~@/assets/img/backimg.png')
-  }
   #app {
-    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    font-family: "微软雅黑", Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: left;

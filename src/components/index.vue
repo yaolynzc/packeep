@@ -5,7 +5,7 @@
         :default-active="activeIndex"
         class="el-menu-demo"
         mode="horizontal"
-        background-color="#409EFF"
+        background-color="#FFAF40"
         text-color="#000"
         active-text-color="#fff">
         <el-menu-item index="1">处理中心</el-menu-item>
@@ -14,8 +14,7 @@
         <img style="width:32px;height:32px;margin-top:15px;" :src="avatar">
         <span>&nbsp;</span>
         <el-dropdown trigger="click" @command="dropDownClick">
-          <span class="el-dropdown-link">
-            {{profileForm.uname}}<i class="el-icon-arrow-down el-icon--right"></i>
+          <span class="el-dropdown-link">{{profileForm.nickname}}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item command="profile">个人信息</el-dropdown-item>
@@ -233,24 +232,21 @@
               </div>
             </div>
           </el-dialog>
-          <el-dialog title="个人信息" width="600px" :visible.sync="dialogProfileVisible">
-            <div>
-              <el-form :model="profileForm">
+          <el-dialog title="个人信息" width="450px" :visible.sync="dialogProfileVisible">
+              <el-form :model="profileForm" ref="profileForm" status-icon :rules="profileRules">
                 <el-form-item label="手机号：" :label-width="profileForm.itemWidth">
                   <span>{{profileForm.id}}</span>
                 </el-form-item>
                 <el-form-item label="用户名：" :label-width="profileForm.itemWidth">
-                  <el-input v-model="profileForm.username" auto-complete="off"></el-input>
+                  <el-input v-model="profileForm.username" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="昵称：" :label-width="profileForm.itemWidth">
-                  <el-input v-model="profileForm.nickname" auto-complete="off"></el-input>
+                  <el-input v-model="profileForm.nickname" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" icon="el-icon-edit" style="margin-left:50px;" @click="profileEditClick">{{profileEditText}}</el-button>
                 </el-form-item>
               </el-form>
-              <div slot="footer" class="dialog-footer">
-                <el-button @click="dialogFormVisible = false">取 消</el-button>
-                <el-button type="primary" @click="dialogFormVisible = false">修 改</el-button>
-              </div>
-            </div>
           </el-dialog>
         </el-col>
       </el-row>
@@ -298,11 +294,21 @@ export default {
         name: []
       },
       profileForm: {
-        uphone: this.$cookie.get('id'),
-        username: this.$cookie.get('username'),
-        nickname: this.$cookie.get('nickname') || '用户',
-        itemWidth: '120px'
+        id: this.$cookie.get('uid'),
+        username: '',
+        nickname: '',
+        itemWidth: '120px',
+        inputDisable: true
       },
+      profileRules: {
+        username: [
+          {required: true, message: '请输入用户名', trigger: 'blur'}
+        ],
+        nickname: [
+          {required: true, message: '请输入用户昵称', trigger: 'blur'}
+        ]
+      },
+      profileEditText: '修改',
       packData: {
         userphone: '',
         data: [],
@@ -322,10 +328,28 @@ export default {
   methods: {
     naviMethod () {
       if (this.checkLogin()) {
-        this.getCount('', this.activeName)
+        this.getProfile()
+        this.search()
       } else {
         this.$router.push('/login')
       }
+    },
+    getProfile () {
+      let uid = this.$cookie.get('uid')
+      let obj = {
+        pwd: this.$cookie.get('upass')
+      }
+      let that = this
+      this.$http.get('/api/user/' + uid, {params: obj})
+        .then(function (res) {
+          if (res.data.success) {
+            that.profileForm.username = res.data.user.Username
+            that.profileForm.nickname = res.data.user.Nickname
+          }
+        })
+        .catch(function (err) {
+          console.log(err.message)
+        })
     },
     getCount (uphone, state) {
       // 页码先归零
@@ -740,7 +764,7 @@ export default {
         }
         case 'logout':
         {
-          that.$cookie.set('id', '')
+          that.$cookie.set('uid', '')
           that.$router.push('/login')
           break
         }
@@ -748,10 +772,51 @@ export default {
           break
       }
     },
+    // 个人信息修改按钮点击事件
+    profileEditClick () {
+      if (this.profileEditText === '修改') {
+        this.profileForm.inputDisable = false
+        this.profileEditText = '确定'
+      } else {
+        this.submitProfile('profileForm')
+      }
+    },
+    // 更新个人信息
+    submitProfile (formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          let obj = {
+            username: this.profileForm.username,
+            nickname: this.profileForm.nickname
+          }
+          let that = this
+          this.$http.put('/api/user/' + this.profileForm.id, this.$qs.stringify(obj))
+            .then(function (res) {
+              if (res.data.success) {
+                that.$message({
+                  message: '修改成功！',
+                  type: 'success'
+                })
+                that.profileEditText = '修改'
+                that.profileForm.inputDisable = true
+                that.dialogProfileVisible = false
+              } else {
+                that.$message({
+                  message: '值未变化！',
+                  type: 'info'
+                })
+              }
+            })
+            .catch(function (err) {
+              console.log(err.message)
+            })
+        }
+      })
+    },
     // 检测是否登录
     checkLogin () {
       let res = true
-      let cookieUid = this.$cookie.get('id')
+      let cookieUid = this.$cookie.get('uid')
       if (!cookieUid) {
         res = false
       }
