@@ -1,7 +1,7 @@
 <template>
   <div class="loginwrap">
   <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-position="left" label-width="0px" class="demo-ruleForm login-container">
-    <h3 class="title">快递托管信息系统</h3>
+    <h3 class="title">快递托管信息平台</h3>
     <el-form-item prop="id">
       <el-input
         type="text"
@@ -20,6 +20,7 @@
         placeholder="密码"></el-input>
     </el-form-item>
     <el-checkbox v-model="checked" checked class="remember">下次自动登录</el-checkbox>
+    <!--<span>没有账号？<a>注册</a></span>-->
     <el-form-item style="width:100%;">
       <el-button type="primary" style="width:100%;" @click.native.prevent="submitForm('ruleForm')" :loading="logining">登录</el-button>
     </el-form-item>
@@ -123,7 +124,7 @@ export default {
   .loginwrap {
     /*background-color: #2c3e50;*/
     background-size: cover;
-    background-image: url('~@/assets/img/backimg.png');
+    background-image: url('~@/assets/img/backimg.jpg');
     height: 100%;
     width: 100%;
     position: fixed;

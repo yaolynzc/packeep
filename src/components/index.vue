@@ -297,6 +297,7 @@ export default {
         id: this.$cookie.get('uid'),
         username: '',
         nickname: '',
+        pwd: '',
         itemWidth: '120px',
         inputDisable: true
       },
