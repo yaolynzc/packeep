@@ -13,7 +13,7 @@
       <div class="user-dropdown-menu">
         <img style="width:32px;height:32px;margin-top:15px;" :src="avatar">
         <span>&nbsp;</span>
-        <el-dropdown trigger="click" @command="dropDownClick">
+        <el-dropdown @command="dropDownClick">
           <span class="el-dropdown-link">{{profileForm.nickname}}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
