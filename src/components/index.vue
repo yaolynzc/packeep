@@ -17,8 +17,9 @@
           <span class="el-dropdown-link">{{profileForm.nickname}}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-            <el-dropdown-item command="logout">退出系统</el-dropdown-item>
+            <el-dropdown-item command="profile"><i class="el-icon-info">&nbsp;个人信息</i></el-dropdown-item>
+            <el-dropdown-item command="modpwd"><i class="el-icon-edit-outline">&nbsp;修改密码</i></el-dropdown-item>
+            <el-dropdown-item command="logout"><i class="el-icon-back">&nbsp;退出系统</i></el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -237,16 +238,29 @@
                 <el-form-item label="手机号：" :label-width="profileForm.itemWidth">
                   <span>{{profileForm.id}}</span>
                 </el-form-item>
-                <el-form-item label="用户名：" :label-width="profileForm.itemWidth">
-                  <el-input v-model="profileForm.username" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
+                <el-form-item label="用户名：" prop="username" :label-width="profileForm.itemWidth">
+                  <el-input @keyup.enter.native="getFocus('inputNickname')" v-model="profileForm.username" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
                 </el-form-item>
-                <el-form-item label="昵称：" :label-width="profileForm.itemWidth">
-                  <el-input v-model="profileForm.nickname" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
+                <el-form-item label="昵称：" prop="nickname" :label-width="profileForm.itemWidth">
+                  <el-input @keyup.enter.native="profileEditClick" ref="inputNickname" v-model="profileForm.nickname" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" icon="el-icon-edit" style="margin-left:50px;" @click="profileEditClick">{{profileEditText}}</el-button>
                 </el-form-item>
               </el-form>
+          </el-dialog>
+          <el-dialog title="修改密码" width="450px" :visible.sync="dialogModPwdVisible">
+            <el-form :model="modpwdForm" ref="modpwdForm" status-icon :rules="modpwdRules">
+              <el-form-item label="新密码：" prop="pass" :label-width="modpwdForm.itemWidth">
+                <el-input type="password" @keyup.enter.native="getFocus('inputCheckpass')" v-model="modpwdForm.pass" auto-complete="off"></el-input>
+              </el-form-item>
+              <el-form-item label="确认密码：" prop="checkpass" :label-width="modpwdForm.itemWidth">
+                <el-input type="password" @keyup.enter.native="modpwdSubmitClick('modpwdForm')" ref="inputCheckpass" v-model="modpwdForm.checkpass" auto-complete="off"></el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" icon="el-icon-check" style="margin-left:50px;" @click="modpwdSubmitClick('modpwdForm')">确定</el-button>
+              </el-form-item>
+            </el-form>
           </el-dialog>
         </el-col>
       </el-row>
@@ -258,11 +272,31 @@
 // 引入百度语音RESTful跨域请求api
 import BaiduAip from '@/utils/baidu_tts_cors.js'
 import moment from 'moment'
+import md5 from 'md5'
 import menavatar from '@/assets/img/men.png'
 
 export default {
   name: 'index',
   data () {
+    var validatePass = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入密码'))
+      } else {
+        if (this.modpwdForm.checkpass !== '') {
+          this.$refs.modpwdForm.validateField('checkpass')
+        }
+        callback()
+      }
+    }
+    var validatePass2 = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请再次输入密码'))
+      } else if (value !== this.modpwdForm.pass) {
+        callback(new Error('两次输入密码不一致!'))
+      } else {
+        callback()
+      }
+    }
     return {
       avatar: menavatar,
       userTelFill: [
@@ -272,6 +306,7 @@ export default {
       mulSelData: [],
       dialogCameraVisible: false,
       dialogProfileVisible: false,
+      dialogModPwdVisible: false,
       dialogCameraPackID: '',
       snapCameraBtn: '拍照',
       activeName: '0',
@@ -297,7 +332,6 @@ export default {
         id: this.$cookie.get('uid'),
         username: '',
         nickname: '',
-        pwd: '',
         itemWidth: '120px',
         inputDisable: true
       },
@@ -310,6 +344,19 @@ export default {
         ]
       },
       profileEditText: '修改',
+      modpwdForm: {
+        pass: '',
+        checkpass: '',
+        itemWidth: '120px'
+      },
+      modpwdRules: {
+        pass: [
+          { required: true, validator: validatePass, trigger: 'blur' }
+        ],
+        checkpass: [
+          { required: true, validator: validatePass2, trigger: 'blur' }
+        ]
+      },
       packData: {
         userphone: '',
         data: [],
@@ -353,8 +400,11 @@ export default {
         })
     },
     getCount (uphone, state) {
-      // 页码先归零
-      this.packData.pagination.page = 0
+      // 总数、页码、列表数据先归零和清空
+      this.packData.pagination.total = 0
+      this.packData.pagination.page = 1
+      this.packData.data = []
+
       let obj = {
         uphone: uphone,
         state: state,
@@ -444,9 +494,6 @@ export default {
     },
     // 搜索
     search () {
-      this.packData.pagination.total = 0
-      this.packData.pagination.page = 1
-      this.packData.data = []
       this.getCount(this.packData.userphone, this.activeName)
     },
     // 入库
@@ -763,6 +810,11 @@ export default {
           that.dialogProfileVisible = true
           break
         }
+        case 'modpwd':
+        {
+          that.dialogModPwdVisible = true
+          break
+        }
         case 'logout':
         {
           that.$cookie.set('uid', '')
@@ -788,7 +840,8 @@ export default {
         if (valid) {
           let obj = {
             username: this.profileForm.username,
-            nickname: this.profileForm.nickname
+            nickname: this.profileForm.nickname,
+            rad: Math.random()
           }
           let that = this
           this.$http.put('/api/user/' + this.profileForm.id, this.$qs.stringify(obj))
@@ -811,6 +864,39 @@ export default {
             .catch(function (err) {
               console.log(err.message)
             })
+        }
+      })
+    },
+    // 修改密码
+    modpwdSubmitClick (formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          let obj = {
+            pwd: md5(this.modpwdForm.pass),
+            rad: Math.random()
+          }
+          let that = this
+          this.$http.put('/api/user/' + this.$cookie.get('uid'), this.$qs.stringify(obj))
+            .then(function (res) {
+              if (res.data.success) {
+                that.$message({
+                  message: '修改成功！',
+                  type: 'success'
+                })
+                that.dialogModPwdVisible = false
+              } else {
+                that.$message({
+                  message: '值未变化！',
+                  type: 'info'
+                })
+              }
+            })
+            .catch(function (err) {
+              console.log(err.message)
+            })
+        } else {
+          console.log('密码设置异常!')
+          return false
         }
       })
     },
@@ -865,6 +951,7 @@ export default {
     top:20px;
   }
   .el-dropdown-link {
+    cursor: pointer;
     color: #ffffff;
   }
 </style>
