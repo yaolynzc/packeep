@@ -93,6 +93,7 @@
                   <el-button size="mini" type="primary" plain @click="searchByTime(0)">今天</el-button>
                   <el-button size="mini" type="primary" plain @click="searchByTime(1)">昨天</el-button>
                   <el-button size="mini" type="primary" plain @click="searchByTime(6)">近七天</el-button>
+                  <el-button size="mini" type="primary" plain @click="search">全部</el-button>
                 </el-row>
                 <el-table
                   v-loading="loading"
@@ -178,6 +179,7 @@
                   <el-button size="mini" type="primary" plain @click="searchByTime(0)">今天</el-button>
                   <el-button size="mini" type="primary" plain @click="searchByTime(1)">昨天</el-button>
                   <el-button size="mini" type="primary" plain @click="searchByTime(6)">近七天</el-button>
+                  <el-button size="mini" type="primary" plain @click="search">全部</el-button>
                 </el-row>
                 <el-table
                   v-loading="loading"
