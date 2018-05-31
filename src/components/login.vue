@@ -1,5 +1,5 @@
 <template>
-  <div class="loginwrap">
+  <div :style="backgroundDiv" class="loginwrap">
   <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-position="left" label-width="0px" class="demo-ruleForm login-container">
     <h3 class="title">快递托管信息平台</h3>
     <el-form-item prop="id">
@@ -34,6 +34,9 @@ export default {
   name: 'login',
   data () {
     return {
+      backgroundDiv: {
+        backgroundImage: 'url(' + require('../assets/img/backimg.jpg') + ')'
+      },
       logining: false,
       ruleForm: {
         id: '',
@@ -124,7 +127,7 @@ export default {
   .loginwrap {
     /*background-color: #2c3e50;*/
     background-size: cover;
-    background-image: url('~@/assets/img/backimg.jpg');
+    /*background-image: url('~@/assets/img/backimg.jpg');*/
     height: 100%;
     width: 100%;
     position: fixed;
