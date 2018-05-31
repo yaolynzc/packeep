@@ -89,6 +89,11 @@
             <el-col :span="24" style="margin-top: 15px">
               <el-tabs v-model="activeName" @tab-click="tabhandleClick">
               <el-tab-pane label="未签收" name="0">
+                <el-row class="daytimeButtons">
+                  <el-button size="mini" type="primary" plain @click="searchByTime(0)">今天</el-button>
+                  <el-button size="mini" type="primary" plain @click="searchByTime(1)">昨天</el-button>
+                  <el-button size="mini" type="primary" plain @click="searchByTime(6)">近七天</el-button>
+                </el-row>
                 <el-table
                   v-loading="loading"
                   element-loading-text="加载中"
@@ -169,6 +174,11 @@
                 </div>
               </el-tab-pane>
               <el-tab-pane label="已签收" name="1">
+                <el-row class="daytimeButtons">
+                  <el-button size="mini" type="primary" plain @click="searchByTime(0)">今天</el-button>
+                  <el-button size="mini" type="primary" plain @click="searchByTime(1)">昨天</el-button>
+                  <el-button size="mini" type="primary" plain @click="searchByTime(6)">近七天</el-button>
+                </el-row>
                 <el-table
                   v-loading="loading"
                   element-loading-text="加载中"
@@ -399,15 +409,16 @@ export default {
           console.log(err.message)
         })
     },
-    getCount (uphone, state) {
+    getCount (uphone, state, daytime) {
       // 总数、页码、列表数据先归零和清空
       this.packData.pagination.total = 0
       this.packData.pagination.page = 1
       this.packData.data = []
-
+      // console.log(daytime)
       let obj = {
         uphone: uphone,
         state: state,
+        daytime: daytime,
         rad: Math.random()
       }
 
@@ -417,7 +428,7 @@ export default {
         .then(function (res) {
           if (res.data.count > 0) {
             that.packData.pagination.total = res.data.count
-            that.getList(uphone, state)
+            that.getList(uphone, state, daytime)
           } else {
             that.packData.data = []
             that.loading = false
@@ -427,10 +438,11 @@ export default {
           console.log(err.message)
         })
     },
-    getList (uphone, state) {
+    getList (uphone, state, daytime) {
       let obj = {
         uphone: uphone,
         state: state,
+        daytime: daytime,
         page: this.packData.pagination.page,
         size: this.packData.pagination.size,
         rad: Math.random()
@@ -490,11 +502,17 @@ export default {
     // 点击页码
     handleCurrentChange (val) {
       this.packData.pagination.page = val
-      this.getList(this.packData.userphone, this.activeName)
+      this.getList(this.packData.userphone, this.activeName, '')
     },
     // 搜索
     search () {
-      this.getCount(this.packData.userphone, this.activeName)
+      this.getCount(this.packData.userphone, this.activeName, '')
+    },
+    searchByTime (day) {
+      moment.locale('zh-cn')
+      let daynow = moment()
+      let daytime = daynow.subtract(day, 'days').format('YYYY-MM-DD')
+      this.getCount('', this.activeName, daytime)
     },
     // 入库
     submitForm (formName) {
@@ -515,7 +533,7 @@ export default {
                   type: 'success'
                 })
                 that.resetForm()
-                that.getCount('', that.activeName)
+                that.getCount('', that.activeName, '')
               }
             })
             .catch(function (err) {
@@ -532,7 +550,7 @@ export default {
     // tab切换点击事件
     tabhandleClick (tab, event) {
       this.packData.data = []
-      this.getCount(this.packData.userphone, this.activeName)
+      this.getCount(this.packData.userphone, this.activeName, '')
     },
     // 不拍照直接签收
     handleOutClick (index, row) {
@@ -552,7 +570,7 @@ export default {
             // 关闭摄像头
             that.closeCamera()
             // 刷新页面
-            that.getCount(that.packData.userphone, that.activeName)
+            that.getCount(that.packData.userphone, that.activeName, '')
           }
         })
         .catch(function (err) {
@@ -577,7 +595,7 @@ export default {
               message: '签收成功！',
               type: 'success'
             })
-            that.getCount(that.packData.userphone, that.activeName)
+            that.getCount(that.packData.userphone, that.activeName, '')
           } else {
             // 显示失败消息
             that.$message({
@@ -595,41 +613,44 @@ export default {
         uphone: row.Userphone,
         uname: row.Username
       }
-
-      let that = this
-      this.$http.post('/api/phone', this.$qs.stringify(obj))
-        .then(function (res) {
-          if (res.data.success) {
-            // 显示电话通知成功消息
-            that.$message({
-              message: '电话通知成功！',
-              type: 'success'
-            })
-            // 电话通知成功后刷新页面
-            let obj = {
-              havedial: 1
+      let dialRes = this.openFullScreenLoading()
+      console.log(dialRes)
+      if (dialRes) {
+        let that = this
+        this.$http.post('/api/phone', this.$qs.stringify(obj))
+          .then(function (res) {
+            if (res.data.success) {
+              // 显示电话通知成功消息
+              that.$message({
+                message: '电话通知成功！',
+                type: 'success'
+              })
+              // 电话通知成功后刷新页面
+              let obj = {
+                havedial: 1
+              }
+              that.$http.put('/api/pack/' + row.Id, that.$qs.stringify(obj))
+                .then(function (res) {
+                  if (res.data.success) {
+                    // 刷新页面
+                    that.getCount(that.packData.userphone, that.activeName, '')
+                  }
+                })
+                .catch(function (err) {
+                  console.log(err.message)
+                })
+            } else {
+              // 显示电话通知失败消息
+              that.$message({
+                message: '通知失败！',
+                type: 'error'
+              })
             }
-            that.$http.put('/api/pack/' + row.Id, that.$qs.stringify(obj))
-              .then(function (res) {
-                if (res.data.success) {
-                  // 刷新页面
-                  that.getCount(that.packData.userphone, that.activeName)
-                }
-              })
-              .catch(function (err) {
-                console.log(err.message)
-              })
-          } else {
-            // 显示电话通知失败消息
-            that.$message({
-              message: '电话通知失败！',
-              type: 'error'
-            })
-          }
-        })
-        .catch(function (err) {
-          console.log(err.message)
-        })
+          })
+          .catch(function (err) {
+            console.log(err.message)
+          })
+      }
     },
     intimeFormatter (row, column) {
       return moment(row.Intime).format('YYYY-MM-DD HH:mm:ss')
@@ -900,6 +921,20 @@ export default {
         }
       })
     },
+    // 满屏loading
+    openFullScreenLoading () {
+      let res = false
+      const loading = this.$loading({
+        lock: true,
+        text: '接通中...',
+        spinner: 'el-icon-phone',
+        background: 'rgba(0, 0, 0, 0.7)'
+      })
+      res = setTimeout(() => {
+        loading.close()
+      }, 2000)
+      return res
+    },
     // 检测是否登录
     checkLogin () {
       let res = true
@@ -953,5 +988,11 @@ export default {
   .el-dropdown-link {
     cursor: pointer;
     color: #ffffff;
+  }
+  .tab-tag-search {
+    cursor:pointer;
+  }
+  .daytimeButtons {
+    margin-bottom: 10px;
   }
 </style>
