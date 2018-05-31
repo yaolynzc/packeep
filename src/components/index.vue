@@ -243,7 +243,7 @@
               </div>
             </div>
           </el-dialog>
-          <el-dialog title="个人信息" width="450px" :visible.sync="dialogProfileVisible">
+          <el-dialog title="个人信息" width="500px" :visible.sync="dialogProfileVisible" @close="closeProfileDialog">
               <el-form :model="profileForm" ref="profileForm" status-icon :rules="profileRules">
                 <el-form-item label="手机号：" :label-width="profileForm.itemWidth">
                   <span>{{profileForm.id}}</span>
@@ -252,7 +252,10 @@
                   <el-input @keyup.enter.native="getFocus('inputNickname')" v-model="profileForm.username" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
                 </el-form-item>
                 <el-form-item label="昵称：" prop="nickname" :label-width="profileForm.itemWidth">
-                  <el-input @keyup.enter.native="profileEditClick" ref="inputNickname" v-model="profileForm.nickname" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
+                  <el-input @keyup.enter.native="getFocus('inputAddress')" ref="inputNickname" v-model="profileForm.nickname" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="地址：" prop="address" style="margin-left:25px;">
+                  <el-input style="width: 350px;" @keyup.enter.native="profileEditClick" ref="inputAddress" v-model="profileForm.address" :disabled="profileForm.inputDisable" auto-complete="off"></el-input>
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" icon="el-icon-edit" style="margin-left:50px;" @click="profileEditClick">{{profileEditText}}</el-button>
@@ -342,6 +345,7 @@ export default {
         id: this.$cookie.get('uid'),
         username: '',
         nickname: '',
+        address: '',
         itemWidth: '120px',
         inputDisable: true
       },
@@ -351,6 +355,9 @@ export default {
         ],
         nickname: [
           {required: true, message: '请输入用户昵称', trigger: 'blur'}
+        ],
+        address: [
+          {required: true, message: '请输入用户地址', trigger: 'blur'}
         ]
       },
       profileEditText: '修改',
@@ -403,6 +410,7 @@ export default {
           if (res.data.success) {
             that.profileForm.username = res.data.user.Username
             that.profileForm.nickname = res.data.user.Nickname
+            that.profileForm.address = res.data.user.Address
           }
         })
         .catch(function (err) {
@@ -855,6 +863,11 @@ export default {
         this.submitProfile('profileForm')
       }
     },
+    // 个人信息对话框关闭按钮点击事件
+    closeProfileDialog () {
+      this.profileForm.inputDisable = true
+      this.profileEditText = '修改'
+    },
     // 更新个人信息
     submitProfile (formName) {
       this.$refs[formName].validate((valid) => {
@@ -862,6 +875,7 @@ export default {
           let obj = {
             username: this.profileForm.username,
             nickname: this.profileForm.nickname,
+            address: this.profileForm.address,
             rad: Math.random()
           }
           let that = this
