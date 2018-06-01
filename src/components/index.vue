@@ -313,6 +313,8 @@ export default {
       }
     }
     return {
+      uid: localStorage.getItem('uid') || sessionStorage.getItem('uid'),
+      upass: localStorage.getItem('upass') || sessionStorage.getItem('upass'),
       avatar: menavatar,
       userTelFill: [
         // { 'value': '153', 'name': 'chen' },
@@ -344,7 +346,7 @@ export default {
         name: []
       },
       profileForm: {
-        id: this.$cookie.get('uid'),
+        id: '',
         username: '',
         nickname: '',
         address: '',
@@ -402,14 +404,15 @@ export default {
       }
     },
     getProfile () {
-      let uid = this.$cookie.get('uid')
+      // console.log(this.uid)
       let obj = {
-        pwd: this.$cookie.get('upass')
+        pwd: this.upass
       }
       let that = this
-      this.$http.get('/api/user/' + uid, {params: obj})
+      this.$http.get('/api/user/' + this.uid, {params: obj})
         .then(function (res) {
           if (res.data.success) {
+            that.profileForm.id = res.data.user.Id
             that.profileForm.username = res.data.user.Username
             that.profileForm.nickname = res.data.user.Nickname
             that.profileForm.address = res.data.user.Address
@@ -429,6 +432,7 @@ export default {
         uphone: uphone,
         state: state,
         daytime: daytime,
+        uid: this.uid,
         rad: Math.random()
       }
 
@@ -453,6 +457,7 @@ export default {
         uphone: uphone,
         state: state,
         daytime: daytime,
+        uid: this.uid,
         page: this.packData.pagination.page,
         size: this.packData.pagination.size,
         rad: Math.random()
@@ -531,7 +536,8 @@ export default {
           let obj = {
             pcode: this.ruleForm.code,
             uphone: this.ruleForm.tel,
-            uname: this.ruleForm.name
+            uname: this.ruleForm.name,
+            uid: this.uid
           }
 
           let that = this
@@ -621,10 +627,11 @@ export default {
     handleDialClick (index, row) {
       let obj = {
         uphone: row.Userphone,
-        uname: row.Username
+        uname: row.Username,
+        uid: this.uid
       }
       let dialRes = this.openFullScreenLoading()
-      console.log(dialRes)
+      // console.log(dialRes)
       if (dialRes) {
         let that = this
         this.$http.post('/api/phone', this.$qs.stringify(obj))
@@ -848,7 +855,9 @@ export default {
         }
         case 'logout':
         {
-          that.$cookie.set('uid', '')
+          // HTML5特性，清空所有本地存储或Session存储的全部变量
+          localStorage.clear()
+          sessionStorage.clear()
           that.$router.push('/login')
           break
         }
@@ -913,7 +922,7 @@ export default {
             rad: Math.random()
           }
           let that = this
-          this.$http.put('/api/user/' + this.$cookie.get('uid'), this.$qs.stringify(obj))
+          this.$http.put('/api/user/' + this.uid, this.$qs.stringify(obj))
             .then(function (res) {
               if (res.data.success) {
                 that.$message({
@@ -953,10 +962,12 @@ export default {
     },
     // 检测是否登录
     checkLogin () {
-      let res = true
-      let cookieUid = this.$cookie.get('uid')
-      if (!cookieUid) {
-        res = false
+      let res = false
+      let localUid = localStorage.getItem('uid')
+      let sessionUid = sessionStorage.getItem('uid')
+      // console.log(sessionUid + '/' + localUid)
+      if (localUid || sessionUid) {
+        res = true
       }
       return res
     }

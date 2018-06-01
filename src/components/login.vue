@@ -67,7 +67,7 @@ export default {
         if (valid) {
           let uid = this.ruleForm.id
           let upass = md5(this.ruleForm.pass)
-          console.log(uid + '-' + upass)
+          // console.log(uid + '-' + upass)
           let obj = {
             pwd: upass
           }
@@ -79,14 +79,14 @@ export default {
                   message: '登录成功！',
                   type: 'success'
                 })
-                // 记住密码，7天内自动登录
+                // 记住密码，每次自动登录
                 if (that.checked) {
-                  that.$cookie.set('uid', res.data.user.Id, 7)
-                  that.$cookie.set('upass', res.data.user.Pwd, 7)
+                  localStorage.setItem('uid', uid)
+                  localStorage.setItem('upass', upass)
                 } else {
-                  // 否则，每小时登录一次
-                  that.$cookie.set('uid', res.data.user.Id, { expires: '1h' })
-                  that.$cookie.set('upass', res.data.user.Pwd, { expires: '1h' })
+                  // 否则，每次手动登录
+                  sessionStorage.setItem('uid', uid)
+                  sessionStorage.setItem('upass', upass)
                 }
                 // 导航到首页
                 that.$router.push('/index')
@@ -112,10 +112,12 @@ export default {
     },
     // 检测是否登录
     checkLogin () {
-      let res = true
-      let cookieUid = this.$cookie.get('uid')
-      if (!cookieUid) {
-        res = false
+      let res = false
+      let localUid = localStorage.getItem('uid')
+      let sessionUid = sessionStorage.getItem('uid')
+      // console.log(sessionUid + '/' + localUid)
+      if (localUid || sessionUid) {
+        res = true
       }
       return res
     }
