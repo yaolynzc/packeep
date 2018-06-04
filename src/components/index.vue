@@ -315,6 +315,7 @@ export default {
     return {
       uid: localStorage.getItem('uid') || sessionStorage.getItem('uid'),
       upass: localStorage.getItem('upass') || sessionStorage.getItem('upass'),
+      bdtoken: '',
       avatar: menavatar,
       userTelFill: [
         // { 'value': '153', 'name': 'chen' },
@@ -405,6 +406,7 @@ export default {
     },
     getProfile () {
       // console.log(this.uid)
+      // 获取个人信息
       let obj = {
         pwd: this.upass
       }
@@ -416,6 +418,19 @@ export default {
             that.profileForm.username = res.data.user.Username
             that.profileForm.nickname = res.data.user.Nickname
             that.profileForm.address = res.data.user.Address
+          }
+        })
+        .catch(function (err) {
+          console.log(err.message)
+        })
+
+      // 获取百度语音合成token
+      this.$http.get('/api/config', {params: {'name': 'bdtoken'}})
+        .then(function (res) {
+          if (res.data.success) {
+            // console.log(JSON.parse(res.data.bdtoken).access_token)
+            // json字符串转json对象，获取百度语音合成token的access_token值
+            that.bdtoken = JSON.parse(res.data.bdtoken).access_token
           }
         })
         .catch(function (err) {
@@ -484,9 +499,10 @@ export default {
             for (let n of redt) {
               text += n.Poscode
             }
+            // 向百度发送语音合成请求
             audio = BaiduAip.btts({
               tex: text,
-              tok: '24.591d35c06b22dda2d19094f77e6b7a23.2592000.1527471488.282335-11167025',
+              tok: that.bdtoken,
               spd: 5,
               pit: 5,
               vol: 9,
