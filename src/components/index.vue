@@ -33,15 +33,6 @@
             ref="ruleForm"
             label-width="100px">
             <el-tag>包裹入库</el-tag>
-            <el-form-item label="编号：" prop="code">
-              <el-input
-                v-model="ruleForm.code"
-                suffix-icon="el-icon-location"
-                ref="inputPcode"
-                @keyup.enter.native="getFocus('inputUphone')"
-                auto-complete="true">
-              </el-input>
-            </el-form-item>
             <el-form-item label="手机：" prop="tel">
               <el-autocomplete
                 v-model="ruleForm.tel"
@@ -59,6 +50,15 @@
                 v-model="ruleForm.name"
                 suffix-icon="el-icon-news"
                 ref="inputUname"
+                @keyup.enter.native="getFocus('inputPcode')"
+                auto-complete="true">
+              </el-input>
+            </el-form-item>
+            <el-form-item label="位置编号：" prop="code">
+              <el-input
+                v-model="ruleForm.code"
+                suffix-icon="el-icon-location"
+                ref="inputPcode"
                 @keyup.enter.native="submitForm('ruleForm')"
                 auto-complete="true">
               </el-input>
@@ -84,6 +84,7 @@
                 </el-input>
                 <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
                 <el-button type="danger" icon="el-icon-delete" @click="deletePack">删除</el-button>
+                <el-button type="success" icon="el-icon-phone" @click="dialBatch">批量电话</el-button>
               </div>
             </el-col>
             <el-col :span="24" style="margin-top: 15px">
@@ -108,7 +109,7 @@
                     width="50">
                   </el-table-column>
                   <el-table-column
-                    label="编号"
+                    label="位置编号"
                     prop="Poscode"
                     width="100">
                   </el-table-column>
@@ -189,7 +190,7 @@
                   :data="packData.data"
                   style="width: 100%">
                   <el-table-column
-                    label="编号"
+                    label="位置编号"
                     prop="Poscode"
                     width="180">
                   </el-table-column>
@@ -211,7 +212,7 @@
                     width="180"
                     align="center">
                     <template slot-scope="scope">
-                      <img  :src="scope.row.Havepic" alt="" style="width: 80px;height: 60px">
+                      <img  :src="uploadPicPre + scope.row.Havepic" alt="" style="width: 80px;height: 60px">
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -317,6 +318,7 @@ export default {
       upass: localStorage.getItem('upass') || sessionStorage.getItem('upass'),
       bdtoken: '',
       avatar: menavatar,
+      uploadPicPre: 'http://211.159.218.41/',
       userTelFill: [
         // { 'value': '153', 'name': 'chen' },
         // { 'value': '186', 'name': 'flame' }
@@ -492,7 +494,7 @@ export default {
 
           if (uphone) {
             let redt = res.data.dt
-            let text = '包裹编号'
+            let text = '包裹位置编号'
             let audio = null
 
             // 拼接检索到的编码
@@ -575,8 +577,9 @@ export default {
       })
     },
     resetForm () {
+      this.getFocus('inputUphone')
       this.$refs['ruleForm'].resetFields()
-      this.getFocus('inputPcode')
+      this.$refs['ruleForm'].clearValidate()
       this.userTelFill = []
     },
     // tab切换点击事件
@@ -664,10 +667,7 @@ export default {
               }
               that.$http.put('/api/pack/' + row.Id, that.$qs.stringify(obj))
                 .then(function (res) {
-                  if (res.data.success) {
-                    // 刷新页面
-                    that.getCount(that.packData.userphone, that.activeName, '')
-                  }
+                  if (res.data.success) {}
                 })
                 .catch(function (err) {
                   console.log(err.message)
@@ -685,40 +685,67 @@ export default {
           })
       }
     },
-    intimeFormatter (row, column) {
-      return moment(row.Intime).format('YYYY-MM-DD HH:mm:ss')
-    },
-    outtimeFormatter (row, column) {
-      return moment(row.Outtime).format('YYYY-MM-DD HH:mm:ss')
-    },
-    getFocus (inputname) {
-      this.$refs[inputname].focus()
-    },
-    searchUphone () {
-      if (this.ruleForm.tel.length > 2) {
-        // console.log(this.ruleForm.tel.length)
-
-        let obj = {
-          uphone: this.ruleForm.tel,
-          size: this.packData.pagination.size,
-          rad: Math.random()
-        }
-
-        let that = this
-        this.$http.get('/api/phone', {params: obj})
-          .then(function (res) {
-            if (res.data.dt && res.data.dt.length > 0) {
-              let redt = res.data.dt
-              // 挑选userphone和username
-              for (let n of redt) {
-                n.value = n.Userphone
-              }
-              that.userTelFill = redt
+    // 批量电话通知
+    dialBatch () {
+      let dialPack = this.mulSelData
+      if (dialPack.length === 0) {
+        this.$message.error('请勾选需要电话通知的包裹!')
+      } else {
+        this.$confirm('您确定给所勾选的包裹用户拨打电话?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          let that = this
+          for (let item of dialPack) {
+            let obj = {
+              uphone: item.Userphone,
+              uname: item.Username,
+              uid: this.uid
             }
+            this.$http.post('/api/phone', this.$qs.stringify(obj))
+              .then(function (res) {
+                if (res.data.success) {
+                  // 电话通知成功后刷新页面
+                  let obj = {
+                    havedial: 1
+                  }
+                  that.$http.put('/api/pack/' + item.Id, that.$qs.stringify(obj))
+                    .then(function (res) {
+                      if (res.data.success) {
+                        // 显示电话通知成功消息
+                        that.$notify({
+                          title: item.Userphone,
+                          message: '电话通知成功！',
+                          position: 'bottom-right',
+                          type: 'success'
+                        })
+                      }
+                    })
+                    .catch(function (err) {
+                      console.log(err.message)
+                    })
+                } else {
+                  // 显示电话通知失败消息
+                  that.$notify.error({
+                    title: item.Userphone,
+                    message: '电话通知失败！',
+                    position: 'bottom-right'
+                  })
+                }
+              })
+              .catch(function (err) {
+                console.log(err.message)
+              })
+          }
+          // 刷新页面
+          this.openFullScreenLoading()
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消批量拨打电话！'
           })
-          .catch(function (err) {
-            console.log(err.message)
-          })
+        })
       }
     },
     // 删除入库记录
@@ -760,6 +787,42 @@ export default {
             message: '已取消删除'
           })
         })
+      }
+    },
+    intimeFormatter (row, column) {
+      return moment(row.Intime).format('YYYY-MM-DD HH:mm:ss')
+    },
+    outtimeFormatter (row, column) {
+      return moment(row.Outtime).format('YYYY-MM-DD HH:mm:ss')
+    },
+    getFocus (inputname) {
+      this.$refs[inputname].focus()
+    },
+    searchUphone () {
+      if (this.ruleForm.tel.length > 2) {
+        // console.log(this.ruleForm.tel.length)
+
+        let obj = {
+          uphone: this.ruleForm.tel,
+          size: this.packData.pagination.size,
+          rad: Math.random()
+        }
+
+        let that = this
+        this.$http.get('/api/phone', {params: obj})
+          .then(function (res) {
+            if (res.data.dt && res.data.dt.length > 0) {
+              let redt = res.data.dt
+              // 挑选userphone和username
+              for (let n of redt) {
+                n.value = n.Userphone
+              }
+              that.userTelFill = redt
+            }
+          })
+          .catch(function (err) {
+            console.log(err.message)
+          })
       }
     },
     handleSelChange (val) {
@@ -971,8 +1034,11 @@ export default {
         spinner: 'el-icon-phone',
         background: 'rgba(0, 0, 0, 0.7)'
       })
+      let that = this
       res = setTimeout(() => {
         loading.close()
+        // 刷新列表
+        that.getCount(that.packData.userphone, that.activeName, '')
       }, 2000)
       return res
     },
@@ -1000,7 +1066,7 @@ export default {
     padding-right: 20px;
   }
   .el-form-item {
-    margin-left: -30px;
+    margin-left: -20px;
   }
   .el-form-item .el-input {
     width:auto;
